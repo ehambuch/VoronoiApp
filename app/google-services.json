@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "135241266881",
+    "firebase_url": "https://voronoiapp-1639e.firebaseio.com",
+    "project_id": "voronoiapp-1639e",
+    "storage_bucket": "voronoiapp-1639e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:135241266881:android:adfa8fe25ab52ed52c4640",
+        "android_client_info": {
+          "package_name": "de.hambuch.voronoiapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "135241266881-m4v6acen6g6c89bls556lg34ricb3b5g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_W9CXeRQv9BTkS10USLREhYcnqurLY7A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "135241266881-m4v6acen6g6c89bls556lg34ricb3b5g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

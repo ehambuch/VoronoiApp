@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<resources>
+    <string name="app_name">Voronoi Diagrams</string>
+    <string name="app_author">Eric Hambuch</string>
+    <string name="app_mailto">erichambuch@googlemail.com</string>
+    <string name="app_description">Display Voronoi diagrams</string>
+    <string name="action_settings">Actions</string>
+    <string name="title_delete">Select point to delete&#8230;</string>
+    <string name="title_selectbackground">Select background picture&#8230;</string>
+    <string name="text_delete">Delete point</string>
+    <string name="text_new">Clear diagram</string>
+    <string name="text_voronoi">Voronoi</string>
+    <string name="text_delaunay">Delaunay</string>
+    <string name="text_convex">Convex hull</string>
+    <string name="text_circle">Max. circle</string>
+    <string name="text_exit">Exit</string>
+    <string name="text_saveimage">Save Image</string>
+    <string name="text_loadimage">Load Background</string>
+    <string name="error_loadimage">Error loading background picture</string>
+    <string name="text_cleardiagram">Really clear the whole diagram?</string>
+</resources>

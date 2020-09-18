@@ -1,0 +1,24 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools" tools:context="de.hambuch.voronoiapp.MainActivity">
+	<item android:alphabeticShortcut="N"
+		android:id="@+id/item_new" android:title="@string/text_new" android:menuCategory="system" android:orderInCategory="2">
+	</item>
+
+
+	<item android:id="@+id/item_delete" android:title="@string/text_delete" android:menuCategory="system" android:orderInCategory="1"/>
+	<item android:alphabeticShortcut="Q" android:id="@+id/item_exit"
+		android:menuCategory="system" android:title="@string/text_exit" android:orderInCategory="5"/>
+	<group android:menuCategory="alternative"
+		android:checkableBehavior="single" android:id="@+id/group_type">
+		<item android:alphabeticShortcut="V" android:id="@+id/item_voronoi"
+		android:title="@string/text_voronoi" android:checkable="true" android:checked="true" android:menuCategory="alternative"/>
+		<item android:alphabeticShortcut="D" android:id="@+id/item_delaunay" android:title="@string/text_delaunay" android:checkable="true" android:menuCategory="alternative"/>
+		<item android:alphabeticShortcut="H" android:id="@+id/item_hull" android:title="@string/text_convex" android:checkable="true" android:menuCategory="alternative"/>
+		<item android:alphabeticShortcut="C" android:id="@+id/item_circle" android:title="@string/text_circle" android:checkable="true" android:menuCategory="alternative"/>
+</group>
+	<item android:id="@+id/item_save" android:menuCategory="system" android:orderInCategory="4" android:title="@string/text_saveimage"/>
+<item android:id="@+id/item_load" android:menuCategory="system" android:orderInCategory="3" android:title="@string/text_loadimage"/>
+
+
+
+</menu>

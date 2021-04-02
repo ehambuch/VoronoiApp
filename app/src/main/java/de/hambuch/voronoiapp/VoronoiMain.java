@@ -50,6 +50,7 @@ import de.hambuch.voronoiapp.geometry.Point;
  * <li>V1.6 (7): Android 9</li>
  * <li>V1.7 (8): Android 10, Google Crashalytics</li>
  * <li>1.8 (10): Android 11, Storage Handling</li>
+ * <li>1.9 (13): Wechsel Signaturkey, Fehlerkorrektur Permissions</li></li>
  * </ol>
  * @author Eric Hambuch (erichambuch@googlemail.com)
  *
@@ -58,8 +59,9 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 
 	private static final int ACTIVITY_SELECT_PICTURE = 999;
 
-    private static final int REQUEST_EXTERNAL_STORAGE = 1;
-    private static String[] PERMISSIONS_STORAGE = {
+    private static final int REQUEST_EXTERNAL_STORAGE = 123;
+
+    private static final String[] PERMISSIONS_STORAGE = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
@@ -272,7 +274,8 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 		voronoiView.setDrawingCacheEnabled(true);
 		OutputStream outputStream = null;
 		try {
-            verifyStoragePermissions(this);
+            if(!verifyStoragePermissions(this))
+            	return;
 
 			ContentResolver resolver = getApplicationContext().getContentResolver();
 			Uri pictureCollection;
@@ -315,8 +318,9 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
      * If the app does not has permission then the user will be prompted to grant permissions
      *
      * @param activity
+	 * @return true if allowed
      */
-    public static void verifyStoragePermissions(Activity activity) {
+    public static boolean verifyStoragePermissions(Activity activity) {
     	if (Build.VERSION.SDK_INT <=  Build.VERSION_CODES.Q) {
 			// Check if we have write permission
 			int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
@@ -328,8 +332,10 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 						PERMISSIONS_STORAGE,
 						REQUEST_EXTERNAL_STORAGE
 				);
+				return false;
 			}
 		}
+    	return true;
     }
 	
 	@Override
@@ -340,6 +346,8 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
             if ( selectedImageUri == null )
             	return;
 			new LoadImage().execute(selectedImageUri);
+		} else if ( resultCode == RESULT_OK && requestCode == REQUEST_EXTERNAL_STORAGE ) {
+			saveImage(); // try again
 		}
 	}
 	

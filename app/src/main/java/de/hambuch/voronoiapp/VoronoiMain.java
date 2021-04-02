@@ -3,6 +3,8 @@ package de.hambuch.voronoiapp;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -12,8 +14,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.format.DateFormat;
 import android.util.Log;
@@ -29,9 +31,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Calendar;
@@ -49,6 +49,7 @@ import de.hambuch.voronoiapp.geometry.Point;
  * <li>V1.5 (6): ported to Android 6.x, storage permissions, layout etc.</li>
  * <li>V1.6 (7): Android 9</li>
  * <li>V1.7 (8): Android 10, Google Crashalytics</li>
+ * <li>1.8 (10): Android 11, Storage Handling</li>
  * </ol>
  * @author Eric Hambuch (erichambuch@googlemail.com)
  *
@@ -63,7 +64,7 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
-    // TODO: make static
+	// TODO: make static
     private final class LoadImage extends AsyncTask<Uri, Void, Bitmap> {
 
 		@Override
@@ -87,7 +88,7 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 		}
 	}
 
-	private DelaunayTriangulation triangulation = new DelaunayTriangulation();
+	private final DelaunayTriangulation triangulation = new DelaunayTriangulation();
 	private VoronoiView voronoiView;
 	private Point pointInMove;
 	private boolean deleteMode = false;
@@ -272,19 +273,27 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 		OutputStream outputStream = null;
 		try {
             verifyStoragePermissions(this);
-			if ( !isExternalStorageWritable() )
-				throw new IOException("External storage not available");
-			File dir = new File(getApplicationContext().getExternalFilesDir(
-					Environment.DIRECTORY_PICTURES), "VoronoiApp");
-			dir.mkdirs();
-			if (dir.isDirectory() && dir.setWritable(true)) {
-				File file = new File(dir, title);
-				outputStream = new FileOutputStream(file);
-				voronoiView.getDrawingCache().compress(Bitmap.CompressFormat.PNG, 100, outputStream);
-				MediaStore.Images.Media.insertImage(getContentResolver(), file.getAbsolutePath(), title, "Created by VoronoiApp");
-				Toast.makeText(this, "Stored image to " + file.getCanonicalPath(), Toast.LENGTH_LONG).show();
-			} else
-				throw new IOException("Cannot access directory: "+dir.getCanonicalPath());
+
+			ContentResolver resolver = getApplicationContext().getContentResolver();
+			Uri pictureCollection;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+				pictureCollection = MediaStore.Images.Media
+						.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+			} else {
+				pictureCollection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+			}
+			ContentValues newPictureDetails = new ContentValues();
+			newPictureDetails.put(MediaStore.Images.Media.DISPLAY_NAME,
+					title);
+			newPictureDetails.put(MediaStore.Images.Media.TITLE,
+					title);
+			newPictureDetails.put(MediaStore.Images.Media.DESCRIPTION,
+					"Created by VoronoiApp");
+			final Uri uri = resolver
+					.insert(pictureCollection, newPictureDetails);
+			outputStream = resolver.openOutputStream(uri, "w");
+			voronoiView.getDrawingCache().compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+			Toast.makeText(this, "Stored image to " + uri.getPath(), Toast.LENGTH_LONG).show();
 		}
 		catch(Exception e) {
 			Toast.makeText(this, "Error saving picture: "+e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
@@ -300,33 +309,27 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 		}
 	}
 
-	private boolean isExternalStorageWritable() {
-		String state = Environment.getExternalStorageState();
-		if (Environment.MEDIA_MOUNTED.equals(state)) {
-			return true;
-		}
-		return false;
-	}
-
     /**
-     * Checks if the app has permission to write to device storage
+     * Checks if the app has permission to write to device storage. Only allowed to Android 10.
      *
      * If the app does not has permission then the user will be prompted to grant permissions
      *
      * @param activity
      */
     public static void verifyStoragePermissions(Activity activity) {
-        // Check if we have write permission
-        int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+    	if (Build.VERSION.SDK_INT <=  Build.VERSION_CODES.Q) {
+			// Check if we have write permission
+			int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
-        if (permission != PackageManager.PERMISSION_GRANTED) {
-            // We don't have permission so prompt the user
-            ActivityCompat.requestPermissions(
-                    activity,
-                    PERMISSIONS_STORAGE,
-                    REQUEST_EXTERNAL_STORAGE
-            );
-        }
+			if (permission != PackageManager.PERMISSION_GRANTED) {
+				// We don't have permission so prompt the user
+				ActivityCompat.requestPermissions(
+						activity,
+						PERMISSIONS_STORAGE,
+						REQUEST_EXTERNAL_STORAGE
+				);
+			}
+		}
     }
 	
 	@Override
@@ -389,9 +392,6 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 
         // Decode with inSampleSize
         BitmapFactory.Options o2 = new BitmapFactory.Options();
-        //o2.inSampleSize = scale;
-        o2.inInputShareable = true; // options to save some memory
-        o2.inPurgeable = true;
         o.outWidth = maxWidth;
         o.outHeight = maxHeight;
         o.inTargetDensity = 1; // TODO?

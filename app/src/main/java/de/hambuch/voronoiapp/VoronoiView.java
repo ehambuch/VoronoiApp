@@ -49,7 +49,12 @@ public class VoronoiView extends View {
 		else
 			this.backgroundBitmap = new BitmapDrawable(this.getResources(), bitmap);
 	}
-	
+
+	@Override
+	public boolean performClick() {
+		return super.performClick();
+	}
+
 	public void onDraw(Canvas canvas) {
 		if (backgroundBitmap == null) {
 			canvas.drawColor(Color.WHITE);

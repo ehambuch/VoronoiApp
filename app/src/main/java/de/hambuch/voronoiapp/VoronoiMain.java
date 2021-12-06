@@ -27,6 +27,7 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -50,7 +51,8 @@ import de.hambuch.voronoiapp.geometry.Point;
  * <li>V1.6 (7): Android 9</li>
  * <li>V1.7 (8): Android 10, Google Crashalytics</li>
  * <li>1.8 (10): Android 11, Storage Handling</li>
- * <li>1.9 (13): Wechsel Signaturkey, Fehlerkorrektur Permissions</li></li>
+ * <li>1.9 (13): Wechsel Signaturkey, Fehlerkorrektur Permissions</li>
+ * <li>1.10.0 (14): Android 12</li>
  * </ol>
  * @author Eric Hambuch (erichambuch@googlemail.com)
  *
@@ -352,7 +354,7 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 	}
 	
 	@Override
-	public void onSaveInstanceState(Bundle savedInstanceState) {
+	public void onSaveInstanceState(@NonNull Bundle savedInstanceState) {
 		super.onSaveInstanceState(savedInstanceState);
 		savedInstanceState.putInt("size", triangulation.size());
 		float[] state = new float[triangulation.size()*2];
@@ -366,7 +368,7 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 	}
 	
 	@Override
-	public void onRestoreInstanceState(Bundle savedInstanceState) {
+	public void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
 		  super.onRestoreInstanceState(savedInstanceState);
 		 
 		  int size = savedInstanceState.getInt("size");

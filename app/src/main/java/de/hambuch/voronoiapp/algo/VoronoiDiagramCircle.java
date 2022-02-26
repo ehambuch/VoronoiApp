@@ -15,7 +15,7 @@ public class VoronoiDiagramCircle extends VoronoiDiagram {
 
 	private Point cursor;
 
-	private class MaximumCircleVisitor implements DelaunayTriangulation.Visitor {
+	private static class MaximumCircleVisitor implements DelaunayTriangulation.Visitor {
 
 		private Circle maxCircle = null;
 

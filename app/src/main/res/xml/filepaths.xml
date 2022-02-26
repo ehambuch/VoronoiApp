@@ -1,0 +1,6 @@
+<paths>
+    <cache-path name="VoronoiImages" path="images/" />
+    <external-media-path
+        name="VoronoiImage"
+        path="/"/>
+</paths>

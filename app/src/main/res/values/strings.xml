@@ -18,4 +18,6 @@
     <string name="text_loadimage">Load Background</string>
     <string name="error_loadimage">Error loading background picture</string>
     <string name="text_cleardiagram">Really clear the whole diagram?</string>
+    <string name="text_oss">Show OSS Licences</string>
+    <string name="text_shareimage">Share image</string>
 </resources>

@@ -6,8 +6,8 @@
 
 
 	<item android:id="@+id/item_delete" android:title="@string/text_delete" android:menuCategory="system" android:orderInCategory="1"/>
-	<item android:alphabeticShortcut="Q" android:id="@+id/item_exit"
-		android:menuCategory="system" android:title="@string/text_exit" android:orderInCategory="5"/>
+	<item android:alphabeticShortcut="Q" android:id="@+id/item_oss"
+		android:menuCategory="system" android:title="@string/text_oss" android:orderInCategory="6"/>
 	<group android:menuCategory="alternative"
 		android:checkableBehavior="single" android:id="@+id/group_type">
 		<item android:alphabeticShortcut="V" android:id="@+id/item_voronoi"
@@ -16,8 +16,10 @@
 		<item android:alphabeticShortcut="H" android:id="@+id/item_hull" android:title="@string/text_convex" android:checkable="true" android:menuCategory="alternative"/>
 		<item android:alphabeticShortcut="C" android:id="@+id/item_circle" android:title="@string/text_circle" android:checkable="true" android:menuCategory="alternative"/>
 </group>
+	<item android:id="@+id/item_load" android:menuCategory="system" android:orderInCategory="3" android:title="@string/text_loadimage"/>
 	<item android:id="@+id/item_save" android:menuCategory="system" android:orderInCategory="4" android:title="@string/text_saveimage"/>
-<item android:id="@+id/item_load" android:menuCategory="system" android:orderInCategory="3" android:title="@string/text_loadimage"/>
+	<item android:id="@+id/item_share" android:menuCategory="system" android:orderInCategory="5" android:title="@string/text_shareimage"/>
+
 
 
 

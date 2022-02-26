@@ -13,7 +13,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -31,12 +30,18 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
 
+import com.google.android.gms.oss.licenses.OssLicensesMenuActivity;
+
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Calendar;
 import java.util.Enumeration;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import de.hambuch.voronoiapp.algo.DelaunayTriangulation;
 import de.hambuch.voronoiapp.algo.VoronoiException;
@@ -53,9 +58,9 @@ import de.hambuch.voronoiapp.geometry.Point;
  * <li>1.8 (10): Android 11, Storage Handling</li>
  * <li>1.9 (13): Wechsel Signaturkey, Fehlerkorrektur Permissions</li>
  * <li>1.10.0 (14): Android 12</li>
+ * <li>1.11.0 (15): Share Image function, OSS licenses</li>
  * </ol>
  * @author Eric Hambuch (erichambuch@googlemail.com)
- *
  */
 public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 
@@ -68,35 +73,50 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
-	// TODO: make static
-    private final class LoadImage extends AsyncTask<Uri, Void, Bitmap> {
+	/**
+	 * Background task to load image.
+	 */
+    private static class LoadImage implements Runnable {
+    	private final Context context;
+    	private final Uri uri;
+    	private final int widht;
+    	private final int height;
+    	private final LoadImageCallback callback;
+
+		LoadImage(Context context, Uri uri, int w, int h, LoadImageCallback callback) {
+			this.context = context;
+			this.uri = uri;
+			this.widht = w;
+			this.height = h;
+			this.callback = callback;
+		}
 
 		@Override
-		protected Bitmap doInBackground(Uri... uris) {
+		public void run() {
 			try {
-				return decodeUri(getApplicationContext(), uris[0], voronoiView.getWidth(), voronoiView.getHeight());
+				Bitmap bitmap = decodeUri(context, uri, widht, height);
+				if ( bitmap != null )
+					callback.imageLoaded(bitmap);
 			}
-			catch(FileNotFoundException e) {
+			catch(Exception e) {
 				Log.e("VoronoiMain", "Error loading picture", e);
+				callback.errorLoading(e);
 			}
-			return null;
-		}
-
-		protected void onPostExecute(Bitmap result) {
-			if ( result != null ) {
-                voronoiView.setBackground(result);
-                voronoiView.invalidate();
-            }
-			else
-				Toast.makeText(getApplicationContext(), getString(R.string.error_loadimage), Toast.LENGTH_LONG).show();
 		}
 	}
+
+	interface LoadImageCallback {
+		void imageLoaded(Bitmap bitmap);
+		void errorLoading(Exception e);
+	}
+
 
 	private final DelaunayTriangulation triangulation = new DelaunayTriangulation();
 	private VoronoiView voronoiView;
 	private Point pointInMove;
 	private boolean deleteMode = false;
 	private Menu menu;
+	private final ExecutorService executors = Executors.newFixedThreadPool(1);
 
 	/** Create a new options menu from XML resource */
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -113,14 +133,20 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 
 		setContentView(R.layout.main);
 
-        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
-        setSupportActionBar(myToolbar);
+		Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+		setSupportActionBar(myToolbar);
 
 		voronoiView = (VoronoiView) findViewById(R.id.voronoiview);
 		voronoiView.setOnTouchListener(this);
 		voronoiView.setTriangulation(triangulation);
 		registerForContextMenu(voronoiView);
-		voronoiView.showVoronoi();
+		voronoiView.post(new Runnable() {
+			@Override
+			public void run() {
+				voronoiView.setBackgroundBitmap((Bitmap)null);
+				voronoiView.showVoronoi();
+			}
+		});
 	}
 
 	/** Handles menu item selections */
@@ -148,14 +174,18 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 		case R.id.item_new:
 			newDiagram();
 			return true;
+			case R.id.item_load:
+				loadBackground();
+				return true;
 		case R.id.item_save:
-			saveImage();
+			if(verifyStoragePermissions(this))
+				saveImage();
 			return true;
-		case R.id.item_load:
-			loadBackground();
-			return true;
-		case R.id.item_exit:
-			this.finish(); // exit
+			case R.id.item_share:
+				shareImage();
+				return true;
+		case R.id.item_oss:
+			startActivity(new Intent(this, OssLicensesMenuActivity.class));
 			return true;
 		}
 		return super.onContextItemSelected(item); // not consume by me
@@ -215,7 +245,7 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
                     public void onClick(DialogInterface dialog, int which) {
                         triangulation.clear();
                         setDeleteMode(false);
-                        voronoiView.setBackground((Bitmap)null);
+                        voronoiView.setBackgroundBitmap((Bitmap)null);
                         voronoiView.invalidate();
                 }
                 })
@@ -264,7 +294,6 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
         intent.setAction(Intent.ACTION_GET_CONTENT);
         startActivityForResult(Intent.createChooser(intent, getText(
         		R.string.title_selectbackground)), ACTIVITY_SELECT_PICTURE);
-
 	}
 	
 	/** 
@@ -272,13 +301,8 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 	 */
 	private void saveImage() {
 		String title = "Voronoi_" + DateFormat.format("yyyyMMdd_hhmmss", Calendar.getInstance()) + ".png";
-		voronoiView.setDrawingCacheQuality(VoronoiView.DRAWING_CACHE_QUALITY_HIGH);
-		voronoiView.setDrawingCacheEnabled(true);
 		OutputStream outputStream = null;
 		try {
-            if(!verifyStoragePermissions(this))
-            	return;
-
 			ContentResolver resolver = getApplicationContext().getContentResolver();
 			Uri pictureCollection;
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -297,14 +321,13 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 			final Uri uri = resolver
 					.insert(pictureCollection, newPictureDetails);
 			outputStream = resolver.openOutputStream(uri, "w");
-			voronoiView.getDrawingCache().compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+			voronoiView.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, outputStream);
 			Toast.makeText(this, "Stored image to " + uri.getPath(), Toast.LENGTH_LONG).show();
 		}
 		catch(Exception e) {
 			Toast.makeText(this, "Error saving picture: "+e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
 		}
 		finally {
-			voronoiView.setDrawingCacheEnabled(false);
 			if (outputStream != null)
 				try {
 					outputStream.close();
@@ -314,6 +337,52 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 		}
 	}
 
+	private void shareImage() {
+		final String title = "Voronoi_" + DateFormat.format("yyyyMMdd_hhmmss", Calendar.getInstance()) + ".png";
+		OutputStream outputStream = null;
+		try {
+			// create temporary file
+			final ContentResolver resolver = getApplicationContext().getContentResolver();
+			final File imageDir = new File(getCacheDir(), "images"); // name from filepath.xml
+			if(!imageDir.exists())
+				imageDir.mkdir();
+			final File file = new File(imageDir, title);
+			final Uri uri = FileProvider.getUriForFile(this, "de.hambuch.voronoiapp.fileprovider", file);
+			outputStream = resolver.openOutputStream(uri, "w");
+
+			ContentValues newPictureDetails = new ContentValues();
+			newPictureDetails.put(MediaStore.Images.Media.DISPLAY_NAME,
+					title);
+			newPictureDetails.put(MediaStore.Images.Media.TITLE,
+					title);
+			newPictureDetails.put(MediaStore.Images.Media.DESCRIPTION,
+					"Created by VoronoiApp");
+			voronoiView.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+			outputStream.close();
+			outputStream = null;
+
+			// and share
+			final Intent shareIntent = new Intent();
+			shareIntent.setAction(Intent.ACTION_SEND);
+			shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+			shareIntent.addFlags(
+					Intent.FLAG_GRANT_READ_URI_PERMISSION);
+			shareIntent.setType("image/jpeg");
+			startActivity(Intent.createChooser(shareIntent, null));
+		}
+		catch(Exception e) {
+			Log.e(getPackageName(),"Error saving picture: ", e);
+			Toast.makeText(this, "Error saving picture: "+e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+		}
+		finally {
+			if (outputStream != null)
+				try {
+					outputStream.close();
+				} catch (IOException e) {
+					// ignore
+				}
+		}
+	}
     /**
      * Checks if the app has permission to write to device storage. Only allowed to Android 10.
      *
@@ -345,9 +414,22 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
     	super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
 		if ( resultCode == RESULT_OK && requestCode == ACTIVITY_SELECT_PICTURE ) {
 			Uri selectedImageUri = imageReturnedIntent.getData();
-            if ( selectedImageUri == null )
-            	return;
-			new LoadImage().execute(selectedImageUri);
+			if (selectedImageUri == null)
+				return;
+			// Load image in background thread!
+			executors.submit(new LoadImage(getApplicationContext(), selectedImageUri, voronoiView.getWidth(), voronoiView.getHeight(),
+					new LoadImageCallback() {
+						@Override
+						public void imageLoaded(Bitmap bitmap) {
+							voronoiView.setBackgroundBitmap(bitmap);
+							voronoiView.postInvalidate(); // from non-UI thread!
+						}
+
+						@Override
+						public void errorLoading(Exception e) {
+							findViewById(R.id.voronoiview).post(() -> Toast.makeText(VoronoiMain.this, getString(R.string.error_loadimage) + ": " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show());
+						}
+					}));
 		} else if ( resultCode == RESULT_OK && requestCode == REQUEST_EXTERNAL_STORAGE ) {
 			saveImage(); // try again
 		}
@@ -388,7 +470,7 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 	 * @param maxWidth the target width
 	 * @param maxHeight the target height
 	 * @return scaled image or <var>null</var>
-	 * @throws FileNotFoundException
+	 * @throws FileNotFoundException on error
 	 */
 	private static Bitmap decodeUri(Context context, Uri selectedImage, int maxWidth, int maxHeight) throws FileNotFoundException {
         // Decode image size
@@ -407,6 +489,5 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
         o.inTargetDensity = 1; // TODO?
         o.inScaled = false; // ?
         return BitmapFactory.decodeStream(context.getContentResolver().openInputStream(selectedImage), null, o2);
-
     }
 }

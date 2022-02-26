@@ -19,6 +19,7 @@
     <de.hambuch.voronoiapp.VoronoiView
 	 android:id="@+id/voronoiview"
 		android:layout_width="fill_parent"
-                android:layout_height="fill_parent"/>
+                android:layout_height="fill_parent">
+	</de.hambuch.voronoiapp.VoronoiView>
 
 </LinearLayout>

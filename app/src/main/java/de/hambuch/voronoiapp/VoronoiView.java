@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -22,32 +21,32 @@ public class VoronoiView extends View {
 
 	private DelaunayTriangulation triang;
 	private GeomElement drawable = null;
-	private Drawable backgroundBitmap = null;
-	
-	public VoronoiView(Context context) {
-		super(context);
-		setClickable(true);
-	}
+	private BitmapDrawable background = null;
 
 	public VoronoiView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 		setClickable(true);
 	}
 
+	public VoronoiView(Context context) {
+		this(context, null, 0);
+	}
+
 	public VoronoiView(Context context, AttributeSet attrs) {
-		super(context, attrs);
-		setClickable(true);
+		this(context, attrs, 0);
 	}
 
 	public void setTriangulation(DelaunayTriangulation triang) {
 		this.triang = triang;
 	}
 
-	public void setBackground(Bitmap bitmap) {
-		if (bitmap == null )
-			this.backgroundBitmap = null;
-		else
-			this.backgroundBitmap = new BitmapDrawable(this.getResources(), bitmap);
+	public void setBackgroundBitmap(Bitmap bitmap) {
+		if (bitmap == null ) {
+			this.background = null;
+		}
+		else {
+			this.background = new BitmapDrawable(this.getResources(), bitmap);
+		}
 	}
 
 	@Override
@@ -56,19 +55,35 @@ public class VoronoiView extends View {
 	}
 
 	public void onDraw(Canvas canvas) {
-		if (backgroundBitmap == null) {
-			canvas.drawColor(Color.WHITE);
-		} else { // with image
-			backgroundBitmap.setBounds(0,0,this.getWidth()-1,this.getHeight()-1);
-			backgroundBitmap.draw(canvas);
+		drawInternal(canvas);
+	}
+
+	private void drawInternal(Canvas canvas) {
+		if (background != null) {
+			background.setBounds(0, 0, getWidth()-1, getHeight()-1);
+			background.draw(canvas);
 		}
-		
+		else
+			canvas.drawColor(Color.WHITE);
+
 		if (drawable != null) {
 			drawable.paint(canvas);
 		}
-		for (Enumeration<Point> p = triang.points(); p.hasMoreElements();) {
+
+		for (Enumeration<Point> p = triang.points(); p.hasMoreElements(); ) {
 			p.nextElement().paint(canvas);
-		}		
+		}
+	}
+
+	/**
+	 * Liefert das aktuelle Bild als Bitmap zurück. Dazu wird die Grafik komplett im Hintergrund nochmal neu aufgebaut.
+	 * @return Grafik als Bitmap
+	 */
+	Bitmap getBitmap() {
+		final Bitmap bitmap = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888, false);
+		final Canvas bitmapCanvas = new Canvas(bitmap);
+		drawInternal(bitmapCanvas);
+		return bitmap;
 	}
 
 	public void showDelaunay() {

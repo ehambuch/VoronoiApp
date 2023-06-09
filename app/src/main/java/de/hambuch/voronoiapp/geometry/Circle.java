@@ -4,6 +4,8 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
 
+import androidx.annotation.NonNull;
+
 /**
  * A circle in R<SUP>2</SUP>.
  *
@@ -117,10 +119,12 @@ public class Circle extends GeomElement implements Cloneable {
 			return OUTOFCIRCLE;
 	}
 
+	@NonNull
 	public Object clone() {
 		return new Circle(center, radius, getColor());
 	}
 
+	@NonNull
 	public String toString() {
 		return center+",r="+radius;
 	}

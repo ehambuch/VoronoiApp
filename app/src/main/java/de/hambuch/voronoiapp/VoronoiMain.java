@@ -59,6 +59,7 @@ import de.hambuch.voronoiapp.geometry.Point;
  * <li>1.9 (13): Wechsel Signaturkey, Fehlerkorrektur Permissions</li>
  * <li>1.10.0 (14): Android 12</li>
  * <li>1.11.0 (15): Share Image function, OSS licenses</li>
+ * <li>1.12.0 (16): Android 13</li>
  * </ol>
  * @author Eric Hambuch (erichambuch@googlemail.com)
  */

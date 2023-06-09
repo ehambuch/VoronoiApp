@@ -1,6 +1,8 @@
 package de.hambuch.voronoiapp.geometry;
 
 
+import androidx.annotation.NonNull;
+
 /**
  * A class that provides a double-connected edge list (DCEL).
  * <PRE>
@@ -139,6 +141,7 @@ public class DCEL {
 		return edge;
 	}
 
+	@NonNull
 	public String toString() {
 		return "DCEL: "+point1+"-"+point2+": F_right="+pointright+"F_left="+pointleft;
 	}

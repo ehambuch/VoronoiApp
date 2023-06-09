@@ -3,6 +3,9 @@ package de.hambuch.voronoiapp.algo;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+
+import androidx.annotation.NonNull;
+
 import de.hambuch.voronoiapp.geometry.Circle;
 import de.hambuch.voronoiapp.geometry.DCEL;
 import de.hambuch.voronoiapp.geometry.Point;
@@ -219,6 +222,7 @@ class DelauTriangle extends Triangle {
 		circumcircle = new Circle(pointA, pointB, pointC);
 	}
 
+	@NonNull
 	public String toString() {
 		if (halfplane)
 			return "H" + pointA + "-" + pointB;

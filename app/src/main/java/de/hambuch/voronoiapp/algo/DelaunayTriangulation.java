@@ -1,9 +1,12 @@
 package de.hambuch.voronoiapp.algo;
 
+import android.graphics.Canvas;
+
+import androidx.annotation.NonNull;
+
 import java.util.Enumeration;
 import java.util.Vector;
 
-import android.graphics.Canvas;
 import de.hambuch.voronoiapp.geometry.GeomElement;
 import de.hambuch.voronoiapp.geometry.Point;
 import de.hambuch.voronoiapp.geometry.Segment;
@@ -550,6 +553,7 @@ public class DelaunayTriangulation extends GeomElement {
 		return allCollinear;
 	}
 
+	@NonNull
 	public String toString() {
 		DelauTriangle t = firstTriangle;
 		resetVisited(t);

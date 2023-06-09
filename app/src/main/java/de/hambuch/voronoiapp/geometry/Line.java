@@ -2,6 +2,8 @@ package de.hambuch.voronoiapp.geometry;
 
 import android.graphics.Canvas;
 
+import androidx.annotation.NonNull;
+
 
 /**
  * represents a Line in R<SUP>2</SUP>.
@@ -82,6 +84,7 @@ public class Line extends GeomElement implements Cloneable, Edge {
 		return POINT_ONEDGE;
    }
 
+   @NonNull
    public Object clone() {
 		Line line = new Line(startPoint, directionX, directionY);
 		line.setColor(getColor());
@@ -157,6 +160,7 @@ public class Line extends GeomElement implements Cloneable, Edge {
 		return new Segment(koords[0],koords[1],koords[2],koords[3]);
    }
 
+   @NonNull
    public String toString() {
 		return startPoint.toString()+"-Line: dx="+directionX+",dy="+directionY;
    }

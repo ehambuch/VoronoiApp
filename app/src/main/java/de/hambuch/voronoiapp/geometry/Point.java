@@ -2,6 +2,8 @@ package de.hambuch.voronoiapp.geometry;
 
 import android.graphics.Canvas;
 
+import androidx.annotation.NonNull;
+
 
 /**
  * Represents a point in R<SUP>2</SUP>.
@@ -63,10 +65,12 @@ public class Point extends GeomElement implements Cloneable {
 		return y;
 	}
 
+	@NonNull
 	public String toString() {
 		return "("+x+","+y+")";
 	}
 
+	@NonNull
 	public Object clone() {
 		return new Point(x,y,getColor());
 	}

@@ -221,7 +221,7 @@ public class Ray extends GeomElement implements Cloneable, Edge {
 				startPoint.getY() + distance * directionY / dsquare);
 	}
 
-	@NonNull
+	@Nullable
 	public Segment clipTo(float xmin, float ymin, float xmax, float ymax) {
 		float x1 = startPoint.getX();
 		float y1 = startPoint.getY();
@@ -242,6 +242,8 @@ public class Ray extends GeomElement implements Cloneable, Edge {
 		}
 		float[] koords = Segment.clipping(x1, y1, x2, y2, xmin, ymin, xmax,
 				ymax);
+		if(koords == null)
+			return null;
 		final Segment segment = new Segment(koords[0], koords[1], koords[2], koords[3]);
 		segment.setColor(getColor());
 		return segment;
@@ -274,7 +276,7 @@ public class Ray extends GeomElement implements Cloneable, Edge {
 			x2 = 0.0f;
 		}
 
-		float koords[] = Segment.clipping(x1, y1, x2, y2, 0.0f, 0.0f, 16000.0f,
+		float[] koords = Segment.clipping(x1, y1, x2, y2, 0.0f, 0.0f, 16000.0f,
 				16000.0f);
 		if (koords != null) {
 			graphics.drawLine((float) koords[0], (float) koords[1],

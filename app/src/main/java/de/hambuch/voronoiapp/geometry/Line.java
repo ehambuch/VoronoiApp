@@ -45,15 +45,17 @@ public class Line extends GeomElement implements Cloneable, Edge {
      * @param directX direction in X (left/right)
      * @param directY direction in Y (up/down)
      */
-   public Line(Point startpoint, float directX, float directY) {
+   public Line(@NonNull Point startpoint, float directX, float directY) {
 		this.startPoint = startpoint;
 		directionX = directX;
 		directionY = directY;
    }
 
-	public void setStartpoint(Point p) {
+	public void setStartpoint(@NonNull Point p) {
 		startPoint = p;
 	}
+
+	@NonNull
 	public Point getStartpoint() {
 		return startPoint;
 	}

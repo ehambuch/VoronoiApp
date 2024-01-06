@@ -27,7 +27,7 @@ import de.hambuch.voronoiapp.geometry.Point;
 public class VoronoiView extends View {
 
 	public enum DrawableElement {
-		VORONOI, VORONOICOLORED, DELAUNAY, CONVEXHULL, MAXCIRCLE;
+		VORONOI, VORONOICOLORED, DELAUNAY, CONVEXHULL, MAXCIRCLE
 	}
 
 	private DelaunayTriangulation triang;
@@ -68,11 +68,6 @@ public class VoronoiView extends View {
 		else {
 			this.background = new BitmapDrawable(this.getResources(), bitmap);
 		}
-	}
-
-	@Override
-	public boolean performClick() {
-		return super.performClick();
 	}
 
 	public void onDraw(@NonNull Canvas canvas) {

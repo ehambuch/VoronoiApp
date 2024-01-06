@@ -1,5 +1,6 @@
 package de.hambuch.voronoiapp;
 
+import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -23,6 +24,8 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -69,7 +72,7 @@ import de.hambuch.voronoiapp.geometry.Point;
  * <li>1.10.0 (14): Android 12</li>
  * <li>1.11.0 (15): Share Image function, OSS licenses</li>
  * <li>1.12.0 (16): Android 13</li>
- * <li>1.13.0 (17): Android 14, Material 3 Design, Removed some functions, Export SVG</li>
+ * <li>1.13.0 (17/18): Android 14, Material 3 Design, Removed some functions, Export SVG</li>
  * </ol>
  * @author Eric Hambuch (erichambuch@googlemail.com)
  */
@@ -118,6 +121,8 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 	private Point pointInMove;
 	private boolean deleteMode = false;
 	private Menu menu;
+
+	private ActivityResultLauncher<Intent> loadImageLauncher;
 	private final ExecutorService executors = Executors.newFixedThreadPool(1);
 
 	/** Called when the activity is first created. */
@@ -148,7 +153,7 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 			voronoiView.setDrawables(drawableElementSet);
 			voronoiView.invalidate();
 		});
-		registerForActivityResult(new ActivityResultContracts.GetContent(), this::loadBackgroundImage);
+		loadImageLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::loadBackgroundImage);
 		voronoiView.post(new Runnable() {
 			@Override
 			public void run() {
@@ -352,9 +357,10 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 				final Intent shareIntent = new Intent();
 				shareIntent.setAction(Intent.ACTION_SEND);
 				shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-				shareIntent.addFlags(
+				shareIntent.setFlags(
 						Intent.FLAG_GRANT_READ_URI_PERMISSION);
-				shareIntent.setType("image/svg+xml");
+				shareIntent.setType("image/svg+xml"); //
+				shareIntent.setClipData(ClipData.newUri(resolver, title, uri));
 				startActivity(Intent.createChooser(shareIntent, getTitle()));
 			}
 		}
@@ -379,7 +385,8 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 		Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivity(Intent.createChooser(intent, getText(
+		intent.addCategory(Intent.CATEGORY_OPENABLE);
+		loadImageLauncher.launch(Intent.createChooser(intent, getText(
         		R.string.title_selectbackground))); // callback see onCreate()
 	}
 
@@ -412,9 +419,10 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 				final Intent shareIntent = new Intent();
 				shareIntent.setAction(Intent.ACTION_SEND);
 				shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-				shareIntent.addFlags(
+				shareIntent.setFlags(
 						Intent.FLAG_GRANT_READ_URI_PERMISSION);
 				shareIntent.setType("image/png");
+				shareIntent.setClipData(ClipData.newUri(resolver, title, uri));
 				startActivity(Intent.createChooser(shareIntent, getTitle()));
 			}
 		}
@@ -432,9 +440,11 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 		}
 	}
 
-	protected void loadBackgroundImage(@NonNull Uri selectedImageUri) {
+	protected void loadBackgroundImage(@NonNull ActivityResult selectedImageUri) {
+		if(selectedImageUri == null || selectedImageUri.getData() == null)
+			return;
 		// Load image in background thread!
-		executors.submit(new LoadImage(getApplicationContext(), selectedImageUri, voronoiView.getWidth(), voronoiView.getHeight(),
+		executors.submit(new LoadImage(getApplicationContext(), selectedImageUri.getData().getData(), voronoiView.getWidth(), voronoiView.getHeight(),
 				new LoadImageCallback() {
 					@Override
 					public void imageLoaded(Bitmap bitmap) {

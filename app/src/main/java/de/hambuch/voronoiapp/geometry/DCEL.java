@@ -122,6 +122,7 @@ public class DCEL {
 	 * @return Edge an edge representing this DCEL.
 	 * @see Edge
 	 */
+	@NonNull
 	public Edge toEdge() {
 		Edge edge = null;
 		 if(point1 != null && point2 != null) {

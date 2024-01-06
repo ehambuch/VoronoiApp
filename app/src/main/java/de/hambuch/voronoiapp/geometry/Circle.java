@@ -59,7 +59,7 @@ public class Circle extends GeomElement implements Cloneable {
 		    radius = Float.POSITIVE_INFINITY;
 		}
 	    else {
-	       center =  new Point((u*(b.getY()-c.getY()) - v*(a.getY()-b.getY())) / den,
+		   center =  new Point((u*(b.getY()-c.getY()) - v*(a.getY()-b.getY())) / den,
 		                       (v*(a.getX()-b.getX()) - u*(b.getX()-c.getX())) / den);
 		   radius = a.distance(center);
 		}

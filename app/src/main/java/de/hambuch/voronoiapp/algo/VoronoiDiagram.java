@@ -33,7 +33,7 @@ public class VoronoiDiagram extends GeomElement {
 
 	/* the construction is based on a delaunay triangulation */
 	@NonNull
-	protected DelaunayTriangulation delaunay;
+	protected final DelaunayTriangulation delaunay;
 
 	private boolean fillColors = false;
 

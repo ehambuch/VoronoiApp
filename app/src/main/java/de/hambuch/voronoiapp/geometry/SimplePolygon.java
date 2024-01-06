@@ -46,7 +46,7 @@ public class SimplePolygon extends Polygon implements Cloneable {
 		return segs;
    }
 
-   public boolean pointInPolygon(Point point) {
+   public boolean pointInPolygon(@NonNull Point point) {
 		Ray ray = new Ray(point, 1.0f, 1.0f);
 		int intersects = 0;
 		Vector<Segment> segs = toSegments();
@@ -74,8 +74,8 @@ public class SimplePolygon extends Polygon implements Cloneable {
 		    if(fillColor > 0) {
 				// TODO g.setColor(fillColor);
 				int nPoints = points.size();
-				int xPoints[] = new int[nPoints];
-				int yPoints[] = new int[nPoints];
+				int[] xPoints = new int[nPoints];
+				int[] yPoints = new int[nPoints];
 				Enumeration<Point> enume = points.elements();
 				Point p;
 				int i=0;

@@ -62,7 +62,6 @@ public class Segment extends GeomElement implements Edge, Cloneable {
 		float ay = a.getY();
 		float bx = b.getX();
 		float by = b.getY();
-		;
 		float cx = c.getX();
 		float cy = c.getY();
 		float area = (bx - ax) * (cy - ay) - (cx - ax) * (by - ay);
@@ -219,7 +218,7 @@ public class Segment extends GeomElement implements Edge, Cloneable {
 
 	@Nullable
 	public Segment clipTo(float xmin, float ymin, float xmax, float ymax) {
-		float koords[] = clipping(startPoint.getX(), startPoint.getY(),
+		float[] koords = clipping(startPoint.getX(), startPoint.getY(),
 				endPoint.getX(), endPoint.getY(), xmin, ymin, xmax, ymax);
 		if (koords == null)
 			return null;
@@ -247,7 +246,7 @@ public class Segment extends GeomElement implements Edge, Cloneable {
 	 * @return double[4] new coordinates or <VAR>null</VAR> if segment is
 	 *         invisible (not in the clipping area)
 	 */
-	@NonNull
+	@Nullable
 	public static float[] clipping(float x1, float y1, float x2, float y2,
 			float xmin, float ymin, float xmax, float ymax) {
 		int dir1 = 0, dir2 = 0; /* Richtungen bestimmen */
@@ -333,7 +332,7 @@ public class Segment extends GeomElement implements Edge, Cloneable {
 					dir2 += CLIP_TOP;
 			}
 		}
-		float koords[] = new float[4];
+		float[] koords = new float[4];
 		koords[0] = x1;
 		koords[1] = y1;
 		koords[2] = x2;
@@ -360,7 +359,7 @@ public class Segment extends GeomElement implements Edge, Cloneable {
 		if (ax < -16000.0f || ax > 16000.0f || ay < -16000.0f || ay > 16000.0f
 				|| bx < -16000.0f || bx > 16000.0f || by < -16000.0f
 				|| by > 16000.0f) {
-			float koords[] = clipping(ax, ay, bx, by, 0.0f, 0.0f, 16000.0f,
+			float[] koords = clipping(ax, ay, bx, by, 0.0f, 0.0f, 16000.0f,
 					16000.0f);
 			if (koords != null) {
 				g.drawLine((float) koords[0], (float) koords[1],

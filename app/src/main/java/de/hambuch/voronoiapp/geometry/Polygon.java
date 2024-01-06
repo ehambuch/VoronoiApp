@@ -16,7 +16,8 @@ import java.util.Vector;
  */
 public abstract class Polygon extends GeomElement {
 
-	protected Vector<Point> points;
+	@NonNull
+	protected final Vector<Point> points;
 	protected int fillColor = 0x000000;
 
 	public Polygon() {
@@ -24,7 +25,7 @@ public abstract class Polygon extends GeomElement {
 		this.points = new Vector<Point>();
 	}
 
-	public Polygon(Vector<Point> points) {
+	public Polygon(@NonNull Vector<Point> points) {
 		super();
 		this.points = points;
 	}

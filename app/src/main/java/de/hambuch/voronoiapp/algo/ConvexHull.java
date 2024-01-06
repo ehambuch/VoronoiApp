@@ -19,26 +19,26 @@ import de.hambuch.voronoiapp.geometry.SimplePolygon;
  */
 public class ConvexHull extends de.hambuch.voronoiapp.geometry.GeomElement {
 
-    private DelaunayTriangulation delaunay;
+    private final DelaunayTriangulation delaunay;
 
     public ConvexHull() {
 		super(Color.GREEN);
 		delaunay = new DelaunayTriangulation();
     }
 
-    public ConvexHull(DelaunayTriangulation delau) {
+    public ConvexHull(@NonNull DelaunayTriangulation delau) {
 		super(Color.GREEN);
 		delaunay = delau;
     }
 
-    public void insertPoint(de.hambuch.voronoiapp.geometry.Point p) throws VoronoiException {
+    public void insertPoint(@NonNull de.hambuch.voronoiapp.geometry.Point p) throws VoronoiException {
 		delaunay.insertPoint(p);
     }
-    public void deletePoint(Point p) {
+    public void deletePoint(@NonNull Point p) {
 		delaunay.deletePoint(p);
     }
 
-    public int pointInHull(Point p) {
+    public int pointInHull(@NonNull Point p) {
 		DelauTriangle tstart = delaunay.getFirstHullTriangle();
 		if(tstart != null) {
 			DelauTriangle t = tstart;

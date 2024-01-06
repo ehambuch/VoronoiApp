@@ -401,7 +401,7 @@ public class DelaunayTriangulation extends GeomElement {
 	 * @return DelauTriangle a triangle containing <VAR>p</VAR>
 	 */
 	@Nullable
-	public DelauTriangle find(@NonNull DelauTriangle start, @NonNull Point p) {
+	public DelauTriangle find(@Nullable DelauTriangle start, @NonNull Point p) {
 		boolean found = false;
 		while (!found) {
 			if (start == null)

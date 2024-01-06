@@ -1,6 +1,8 @@
 package de.hambuch.voronoiapp.geometry;
 
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 
 import androidx.annotation.NonNull;
 
@@ -34,13 +36,11 @@ public class Point extends GeomElement implements Cloneable {
    protected float y;
 
 	public Point(float x, float y) {
-		this.x = x;
-		this.y = y;
+		this(x,y, Color.BLACK);
 	}
 
    public Point(int x, int y) {
-		this.x = x;
-		this.y = y;
+		this(x,y, Color.BLACK);
    }
 
 	public Point(float x, float y, int color) {
@@ -111,7 +111,7 @@ public class Point extends GeomElement implements Cloneable {
 	/**
 	 * Compares two points in lexicographic order
 	 *
-	 * @param secondPoint
+	 * @param toPoint
 	 * @return int -1 if (this &lt; second), 1 if (this &gt; second) and 0 if (this == second)
 	 */
 	public int compare(@NonNull Point toPoint) {
@@ -123,7 +123,7 @@ public class Point extends GeomElement implements Cloneable {
 	}
 
 	public void paint(@NonNull Canvas graphics) {
-		assert getFillPaint() != null;
-		graphics.drawCircle((float)x, (float)y, 6, getFillPaint());
+		final Paint paint = getFillPaint() != null ? getFillPaint() : getLinePaint();
+		graphics.drawCircle((float)x, (float)y, 6, paint);
 	}
 }

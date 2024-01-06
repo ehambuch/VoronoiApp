@@ -1,5 +1,7 @@
 package de.hambuch.voronoiapp.algo;
 
+import androidx.annotation.NonNull;
+
 public class VoronoiException extends Exception
 {
 
@@ -8,7 +10,7 @@ public class VoronoiException extends Exception
 	public VoronoiException() {
 		super();
 	}
-	public VoronoiException(String s) {
+	public VoronoiException(@NonNull String s) {
 		super(s);
 	}
 }

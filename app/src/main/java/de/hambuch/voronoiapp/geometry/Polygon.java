@@ -2,6 +2,9 @@ package de.hambuch.voronoiapp.geometry;
 
 import android.graphics.Canvas;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.util.Enumeration;
 import java.util.Vector;
 
@@ -29,18 +32,16 @@ public abstract class Polygon extends GeomElement {
 	/**
 	 * Checks if a point lies in the interior of this polygon.
 	 * 
-	 * @param Point
-	 *            p
+	 * @param p
 	 * @return boolean <VAR>true</VAR> if <VAR>p</VAR> lies in the interior.
 	 */
-	public abstract boolean pointInPolygon(Point p);
+	public abstract boolean pointInPolygon(@NonNull Point p);
 
 	/**
 	 * Set the fill color for this polygon. If <VAR>fillcolro</VAR> is
 	 * <VAR>null</VAR>, then the polygon won't be filled.
 	 * 
-	 * @param Color
-	 *            fillcolor
+	 * @param fillcolor
 	 */
 	public void setFillColor(int fillcolor) {
 		this.fillColor = fillcolor;
@@ -59,30 +60,29 @@ public abstract class Polygon extends GeomElement {
 	/**
 	 * add a point to the polygon.
 	 * 
-	 * @param Point
-	 *            point
+	 * @param point
 	 */
-	public void addPoint(Point point) {
+	public void addPoint(@NonNull Point point) {
 		points.addElement(point);
 	}
 
 	/**
 	 * remove a point from the polygon.
 	 * 
-	 * @param Point
-	 *            point
+	 * @param point
 	 */
-	public void removePoint(Point point) {
+	public void removePoint(@NonNull Point point) {
 		points.removeElement(point);
 	}
 
-	public abstract void paint(Canvas g);
+	public abstract void paint(@NonNull Canvas g);
 
 	/**
 	 * return an array of all points.
 	 * 
 	 * @return Point[] array of points or <VAR>null</VAR>
 	 */
+	@Nullable
 	public Point[] toPoints() {
 		int size = points.size();
 		if (size == 0)
@@ -97,6 +97,7 @@ public abstract class Polygon extends GeomElement {
 		return points.size();
 	}
 
+	@NonNull
 	public String toString() {
 		StringBuilder str = new StringBuilder("Polygon: ");
 		Enumeration<Point> enume = points.elements();
@@ -109,10 +110,10 @@ public abstract class Polygon extends GeomElement {
 	/**
 	 * Clips the polygon to (xmin, ymin)-(xmax, ymax).
 	 * 
-	 * @param double xmin
-	 * @param double ymin
-	 * @param double xmax
-	 * @param double ymax
+	 * @param xmin
+	 * @param ymin
+	 * @param xmax
+	 * @param  ymax
 	 * @return Polygon the polygon clipped to the given rectangle (may be
 	 *         <VAR>null</VAR> if empty!)
 	 */

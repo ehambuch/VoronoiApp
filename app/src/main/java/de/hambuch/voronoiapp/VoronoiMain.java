@@ -1,17 +1,14 @@
 package de.hambuch.voronoiapp;
 
-import android.Manifest;
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -26,25 +23,37 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.Toast;
 
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity;
+import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Enumeration;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import de.hambuch.voronoiapp.algo.ConvexHull;
 import de.hambuch.voronoiapp.algo.DelaunayTriangulation;
+import de.hambuch.voronoiapp.algo.VoronoiDiagram;
 import de.hambuch.voronoiapp.algo.VoronoiException;
+import de.hambuch.voronoiapp.geometry.GeomElement;
 import de.hambuch.voronoiapp.geometry.Point;
 
 /**
@@ -60,19 +69,11 @@ import de.hambuch.voronoiapp.geometry.Point;
  * <li>1.10.0 (14): Android 12</li>
  * <li>1.11.0 (15): Share Image function, OSS licenses</li>
  * <li>1.12.0 (16): Android 13</li>
+ * <li>1.13.0 (17): Android 14, Material 3 Design, Removed some functions, Export SVG</li>
  * </ol>
  * @author Eric Hambuch (erichambuch@googlemail.com)
  */
 public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
-
-	private static final int ACTIVITY_SELECT_PICTURE = 999;
-
-    private static final int REQUEST_EXTERNAL_STORAGE = 123;
-
-    private static final String[] PERMISSIONS_STORAGE = {
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-    };
 
 	/**
 	 * Background task to load image.
@@ -119,74 +120,83 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 	private Menu menu;
 	private final ExecutorService executors = Executors.newFixedThreadPool(1);
 
-	/** Create a new options menu from XML resource */
-	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater inflater = getMenuInflater();
-		inflater.inflate(R.menu.options_menu, menu);
-        this.menu = menu;
-		return true;
-	}
-
 	/** Called when the activity is first created. */
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
+	public void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.main);
-
-		Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
-		setSupportActionBar(myToolbar);
 
 		voronoiView = (VoronoiView) findViewById(R.id.voronoiview);
 		voronoiView.setOnTouchListener(this);
 		voronoiView.setTriangulation(triangulation);
 		registerForContextMenu(voronoiView);
+		((ChipGroup)findViewById(R.id.chipGroup)).setOnCheckedStateChangeListener((group, checkedIds) -> {
+			final Set<VoronoiView.DrawableElement> drawableElementSet = new HashSet<>();
+			if(checkedIds.contains(R.id.filter_voronoi))
+				drawableElementSet.add(VoronoiView.DrawableElement.VORONOI);
+			if(checkedIds.contains(R.id.filter_voronoicolor))
+				drawableElementSet.add(VoronoiView.DrawableElement.VORONOICOLORED); // TODO: not implemented yet
+			if(checkedIds.contains(R.id.filter_delaunay))
+				drawableElementSet.add(VoronoiView.DrawableElement.DELAUNAY);
+			if(checkedIds.contains(R.id.filter_convex))
+				drawableElementSet.add(VoronoiView.DrawableElement.CONVEXHULL);
+			if(checkedIds.contains(R.id.filter_circle))
+				drawableElementSet.add(VoronoiView.DrawableElement.MAXCIRCLE);
+			if(drawableElementSet.isEmpty())
+				drawableElementSet.add(VoronoiView.DrawableElement.VORONOI); // minimum: draw voronoi
+			voronoiView.setDrawables(drawableElementSet);
+			voronoiView.invalidate();
+		});
+		registerForActivityResult(new ActivityResultContracts.GetContent(), this::loadBackgroundImage);
 		voronoiView.post(new Runnable() {
 			@Override
 			public void run() {
 				voronoiView.setBackgroundBitmap((Bitmap)null);
-				voronoiView.showVoronoi();
+				voronoiView.setDrawables(Collections.singleton(VoronoiView.DrawableElement.VORONOI));
 			}
 		});
 	}
 
+	@Override
+	public void onStart() {
+		super.onStart();
+		if ( triangulation.size() <= 3) { // for the first 3 points, tell the user what to do
+			Snackbar.make(voronoiView, R.string.text_clickpoint, Snackbar.LENGTH_LONG).show();
+		}
+	}
+
+	/** Create a new options menu from XML resource */
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.options_menu, menu);
+		this.menu = menu;
+		return true;
+	}
+
 	/** Handles menu item selections */
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.item_delaunay:
-            setCheckedItems(item);
-			voronoiView.showDelaunay();
-			return true;
-		case R.id.item_hull:
-            setCheckedItems(item);
-			voronoiView.showConvexHull();
-			return true;
-		case R.id.item_voronoi:
-            setCheckedItems(item);
-			voronoiView.showVoronoi();
-			return true;
-		case R.id.item_circle:
-            setCheckedItems(item);
-			voronoiView.showMaxCircle();
-			return true;
-		case R.id.item_delete:
+	public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+		final int itemId = item.getItemId();
+		if(itemId ==  R.id.item_delete) {
 			setDeleteMode(true);
 			return true;
-		case R.id.item_new:
+		} else if(itemId ==  R.id.item_new) {
 			newDiagram();
 			return true;
-			case R.id.item_load:
+		} else if(itemId ==  R.id.item_load) {
 				loadBackground();
 				return true;
-		case R.id.item_save:
-			if(verifyStoragePermissions(this))
-				saveImage();
+		} else if(itemId ==  R.id.item_share) {
+			shareImage();
 			return true;
-			case R.id.item_share:
-				shareImage();
-				return true;
-		case R.id.item_oss:
+		} else if(itemId == R.id.item_sharesvg) {
+			exportSvg();
+			return true;
+		} else if(itemId ==  R.id.item_oss) {
 			startActivity(new Intent(this, OssLicensesMenuActivity.class));
+			return true;
+		} else if(itemId == R.id.item_rate) {
+			showRateGooglePlay();
 			return true;
 		}
 		return super.onContextItemSelected(item); // not consume by me
@@ -206,9 +216,12 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 					setDeleteMode(false);
 					triangulation.insertPoint(new Point(event.getX(), event.getY(), Color.RED));
 					voronoiView.invalidate();
+					if ( triangulation.size() <= 3) { // notify user to set more points
+						Snackbar.make(voronoiView, R.string.text_clickanotherpoint, Snackbar.LENGTH_LONG).show();
+					}
 				} catch(VoronoiException e) {
-		// ignore
-			}
+					// ignore
+				}
 				return true;
 			} else
 			{
@@ -239,34 +252,23 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 	}
 	
 	public void newDiagram() {
-		AlertDialog alertDialog;
-        alertDialog = new AlertDialog.Builder(this).setCancelable(true).
+        new MaterialAlertDialogBuilder(this).setCancelable(true).
                 setMessage(R.string.text_cleardiagram).setTitle(R.string.text_new).
-                setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        triangulation.clear();
-                        setDeleteMode(false);
-                        voronoiView.setBackgroundBitmap((Bitmap)null);
-                        voronoiView.invalidate();
-                }
-                })
+                setPositiveButton(android.R.string.yes, (dialog, which) -> {
+					triangulation.clear();
+					setDeleteMode(false);
+					voronoiView.setBackgroundBitmap((Bitmap)null);
+					voronoiView.invalidate();
+			})
                 .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
                         // do nothing
                     }
                 })
                 .setIcon(android.R.drawable.ic_delete).
-                        create();
-        alertDialog.show();
+                        create().show();
 	}
-
-    private void setCheckedItems(MenuItem tobeChecked) {
-        menu.findItem(R.id.item_hull).setChecked(false);
-        menu.findItem(R.id.item_voronoi).setChecked(false);
-        menu.findItem(R.id.item_delaunay).setChecked(false);
-        menu.findItem(R.id.item_circle).setChecked(false);
-        tobeChecked.setChecked(true);
-    }
 
 	private void removePoint(Point p) {
 		Point deleteP = triangulation.findPoint(p.getX(), p.getY(), 100.0f);
@@ -284,49 +286,81 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 				setTitle(R.string.app_name);
 		
 	}
-	
-	
-	/**
-	 * Load background from gallery.
-	 */
-	private void loadBackground() {
-		Intent intent = new Intent();
-        intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(Intent.createChooser(intent, getText(
-        		R.string.title_selectbackground)), ACTIVITY_SELECT_PICTURE);
+
+	private void showRateGooglePlay() {
+		try {
+			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + getPackageName())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+		} catch (android.content.ActivityNotFoundException anfe) {
+			startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + getPackageName())));
+		}
 	}
-	
-	/** 
-	 * Save image as PNG to SD card. 
-	 */
-	private void saveImage() {
-		String title = "Voronoi_" + DateFormat.format("yyyyMMdd_hhmmss", Calendar.getInstance()) + ".png";
+
+	private void exportSvg() {
+		final String title = "Voronoi_" + DateFormat.format("yyyyMMdd_hhmmss", Calendar.getInstance()) + ".svg";
 		OutputStream outputStream = null;
 		try {
-			ContentResolver resolver = getApplicationContext().getContentResolver();
-			Uri pictureCollection;
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-				pictureCollection = MediaStore.Images.Media
-						.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
-			} else {
-				pictureCollection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-			}
-			ContentValues newPictureDetails = new ContentValues();
-			newPictureDetails.put(MediaStore.Images.Media.DISPLAY_NAME,
-					title);
-			newPictureDetails.put(MediaStore.Images.Media.TITLE,
-					title);
-			newPictureDetails.put(MediaStore.Images.Media.DESCRIPTION,
-					"Created by VoronoiApp");
-			final Uri uri = resolver
-					.insert(pictureCollection, newPictureDetails);
+			// create temporary file
+			final ContentResolver resolver = getApplicationContext().getContentResolver();
+			final File imageDir = new File(getCacheDir(), "images"); // name from filepath.xml
+			if(!imageDir.exists())
+				imageDir.mkdir();
+			final File file = new File(imageDir, title);
+			final Uri uri = FileProvider.getUriForFile(this, "de.hambuch.voronoiapp.fileprovider", file);
 			outputStream = resolver.openOutputStream(uri, "w");
-			voronoiView.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, outputStream);
-			Toast.makeText(this, "Stored image to " + uri.getPath(), Toast.LENGTH_LONG).show();
+
+			if(outputStream != null) {
+				final List<GeomElement> elements = new ArrayList<>();
+				// all points at once
+				triangulation.points().forEachRemaining(elements::add);
+				// and the graphics splitted into basic geometric elements
+				final VoronoiDiagram diagramToExport = voronoiView.getVoronoiDiagram();
+				if(diagramToExport != null)
+					diagramToExport.exportToElements(elements);
+				final DelaunayTriangulation delaunayToExport = voronoiView.getDelaunayTriang();
+				if(delaunayToExport != null)
+					delaunayToExport.visitTriangles(elements::add);
+				final ConvexHull hullToExport = voronoiView.getConvexHull();
+				if(hullToExport != null)
+					elements.add(hullToExport.toPolygon());
+
+				// and now we have a list of geom elements that can be exported
+				new SvgExporter(outputStream).export(
+						elements,
+						new Rect(0,0, voronoiView.getWidth(), voronoiView.getHeight()));
+
+				ContentValues newPictureDetails = new ContentValues();
+				newPictureDetails.put(MediaStore.Images.Media.DISPLAY_NAME,
+						title);
+				newPictureDetails.put(MediaStore.Images.Media.TITLE,
+						title);
+				newPictureDetails.put(MediaStore.Images.Media.DESCRIPTION,
+						"Created by VoronoiApp");
+
+				outputStream.close();
+				outputStream = null;
+
+				// on emulator dump to console
+				if(BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+					grantUriPermission(getPackageName(), uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+					try(InputStream inputStream = resolver.openInputStream(uri))
+					{
+						Log.d(VoronoiApp.APPNAME, new String(inputStream.readAllBytes()));
+					}
+				}
+
+				// and share
+				final Intent shareIntent = new Intent();
+				shareIntent.setAction(Intent.ACTION_SEND);
+				shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+				shareIntent.addFlags(
+						Intent.FLAG_GRANT_READ_URI_PERMISSION);
+				shareIntent.setType("image/svg+xml");
+				startActivity(Intent.createChooser(shareIntent, getTitle()));
+			}
 		}
 		catch(Exception e) {
-			Toast.makeText(this, "Error saving picture: "+e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+			Log.e(getPackageName(),"Error saving SVG: ", e);
+			Toast.makeText(this, "Error saving SVG: "+e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
 		}
 		finally {
 			if (outputStream != null)
@@ -336,6 +370,17 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 					// ignore
 				}
 		}
+	}
+	
+	/**
+	 * Load background from gallery.
+	 */
+	private void loadBackground() {
+		Intent intent = new Intent();
+        intent.setType("image/*");
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        startActivity(Intent.createChooser(intent, getText(
+        		R.string.title_selectbackground))); // callback see onCreate()
 	}
 
 	private void shareImage() {
@@ -351,25 +396,27 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 			final Uri uri = FileProvider.getUriForFile(this, "de.hambuch.voronoiapp.fileprovider", file);
 			outputStream = resolver.openOutputStream(uri, "w");
 
-			ContentValues newPictureDetails = new ContentValues();
-			newPictureDetails.put(MediaStore.Images.Media.DISPLAY_NAME,
-					title);
-			newPictureDetails.put(MediaStore.Images.Media.TITLE,
-					title);
-			newPictureDetails.put(MediaStore.Images.Media.DESCRIPTION,
-					"Created by VoronoiApp");
-			voronoiView.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, outputStream);
-			outputStream.close();
-			outputStream = null;
+			if(outputStream != null) {
+				ContentValues newPictureDetails = new ContentValues();
+				newPictureDetails.put(MediaStore.Images.Media.DISPLAY_NAME,
+						title);
+				newPictureDetails.put(MediaStore.Images.Media.TITLE,
+						title);
+				newPictureDetails.put(MediaStore.Images.Media.DESCRIPTION,
+						"Created by VoronoiApp");
+				voronoiView.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+				outputStream.close();
+				outputStream = null;
 
-			// and share
-			final Intent shareIntent = new Intent();
-			shareIntent.setAction(Intent.ACTION_SEND);
-			shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-			shareIntent.addFlags(
-					Intent.FLAG_GRANT_READ_URI_PERMISSION);
-			shareIntent.setType("image/jpeg");
-			startActivity(Intent.createChooser(shareIntent, null));
+				// and share
+				final Intent shareIntent = new Intent();
+				shareIntent.setAction(Intent.ACTION_SEND);
+				shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+				shareIntent.addFlags(
+						Intent.FLAG_GRANT_READ_URI_PERMISSION);
+				shareIntent.setType("image/png");
+				startActivity(Intent.createChooser(shareIntent, getTitle()));
+			}
 		}
 		catch(Exception e) {
 			Log.e(getPackageName(),"Error saving picture: ", e);
@@ -384,56 +431,22 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 				}
 		}
 	}
-    /**
-     * Checks if the app has permission to write to device storage. Only allowed to Android 10.
-     *
-     * If the app does not has permission then the user will be prompted to grant permissions
-     *
-     * @param activity
-	 * @return true if allowed
-     */
-    public static boolean verifyStoragePermissions(Activity activity) {
-    	if (Build.VERSION.SDK_INT <=  Build.VERSION_CODES.Q) {
-			// Check if we have write permission
-			int permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
-			if (permission != PackageManager.PERMISSION_GRANTED) {
-				// We don't have permission so prompt the user
-				ActivityCompat.requestPermissions(
-						activity,
-						PERMISSIONS_STORAGE,
-						REQUEST_EXTERNAL_STORAGE
-				);
-				return false;
-			}
-		}
-    	return true;
-    }
-	
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent imageReturnedIntent) {
-    	super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
-		if ( resultCode == RESULT_OK && requestCode == ACTIVITY_SELECT_PICTURE ) {
-			Uri selectedImageUri = imageReturnedIntent.getData();
-			if (selectedImageUri == null)
-				return;
-			// Load image in background thread!
-			executors.submit(new LoadImage(getApplicationContext(), selectedImageUri, voronoiView.getWidth(), voronoiView.getHeight(),
-					new LoadImageCallback() {
-						@Override
-						public void imageLoaded(Bitmap bitmap) {
-							voronoiView.setBackgroundBitmap(bitmap);
-							voronoiView.postInvalidate(); // from non-UI thread!
-						}
+	protected void loadBackgroundImage(@NonNull Uri selectedImageUri) {
+		// Load image in background thread!
+		executors.submit(new LoadImage(getApplicationContext(), selectedImageUri, voronoiView.getWidth(), voronoiView.getHeight(),
+				new LoadImageCallback() {
+					@Override
+					public void imageLoaded(Bitmap bitmap) {
+						voronoiView.setBackgroundBitmap(bitmap);
+						voronoiView.postInvalidate(); // from non-UI thread!
+					}
 
-						@Override
-						public void errorLoading(Exception e) {
-							findViewById(R.id.voronoiview).post(() -> Toast.makeText(VoronoiMain.this, getString(R.string.error_loadimage) + ": " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show());
-						}
-					}));
-		} else if ( resultCode == RESULT_OK && requestCode == REQUEST_EXTERNAL_STORAGE ) {
-			saveImage(); // try again
-		}
+					@Override
+					public void errorLoading(Exception e) {
+						findViewById(R.id.voronoiview).post(() -> Toast.makeText(VoronoiMain.this, getString(R.string.error_loadimage) + ": " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show());
+					}
+				}));
 	}
 	
 	@Override
@@ -442,8 +455,8 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 		savedInstanceState.putInt("size", triangulation.size());
 		float[] state = new float[triangulation.size()*2];
 		int i = 0;
-		for(Enumeration<Point> e = triangulation.points(); e.hasMoreElements(); ) {
-			Point p = e.nextElement();
+		for(Iterator<Point> e = triangulation.points(); e.hasNext(); ) {
+			Point p = e.next();
 			state[i++] = p.getX();
 			state[i++] = p.getY();
 		}

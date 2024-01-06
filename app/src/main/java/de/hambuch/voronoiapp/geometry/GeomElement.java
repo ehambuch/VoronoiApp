@@ -1,8 +1,11 @@
 package de.hambuch.voronoiapp.geometry;
 
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * A superclass for all geometic objects that can be painted.
@@ -11,11 +14,8 @@ import android.graphics.Paint;
  * @author Eric Hambuch
  */
 public abstract class GeomElement {
-
-	@Deprecated
-	protected int color = Color.BLACK;
 	private final Paint linePaint = new Paint();
-	private final Paint fillPaint = new Paint();
+	private Paint fillPaint = null;
 	
 	public GeomElement() {
 		init();
@@ -30,20 +30,31 @@ public abstract class GeomElement {
 		linePaint.setStrokeWidth(3.0f);
 	}
 	
-	public int getColor() { return color; }
-	
-	public void setColor(int color) { 
-		this.color = color; 
+	public void setColor(@ColorInt int color) {
+		linePaint.setStyle(Paint.Style.STROKE);
 		linePaint.setColor(color);
+	}
+
+	public @ColorInt int getColor() {
+		return linePaint.getColor();
+	}
+
+	public void setFillColor(@ColorInt int color) {
+		fillPaint = new Paint();
+		fillPaint.setStyle(Paint.Style.FILL);
 		fillPaint.setColor(color);
 	}
 
+	@NonNull
 	protected Paint getLinePaint() {
 		return linePaint;
 	}
-	
+
+	@Nullable
 	protected Paint getFillPaint() {
 		return fillPaint;
 	}
-	public abstract void paint(Canvas graphics);
+
+	public abstract void paint(@NonNull Canvas graphics);
+
 }

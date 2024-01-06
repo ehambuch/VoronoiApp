@@ -3,6 +3,7 @@ package de.hambuch.voronoiapp.geometry;
 import android.graphics.Canvas;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 
 /**
@@ -21,14 +22,15 @@ public class Line extends GeomElement implements Cloneable, Edge {
 	private static final long serialVersionUID = -6669576517536781865L;
 	
 	/* the line is described by (x,y)=(x_s,y_s)+t*(dx,dy) */
-    protected Point startPoint;
+	@NonNull
+	protected Point startPoint;
     protected float directionX;
     protected float directionY;
 
     /** Create a line defined by two points
      *
-     * @param Point startpoint
-     * @param Point directionpoint
+     * @param startpoint
+     * @param directionpoint
      *
      */
 	public Line(Point startpoint, Point directionpoint) {
@@ -39,9 +41,9 @@ public class Line extends GeomElement implements Cloneable, Edge {
 
     /** Create a line defined by a point and direction in x,y
      *
-     * @param Point startpoint
-     * @param double directX direction in X (left/right)
-     * @param double directY direction in Y (up/down)
+     * @param startpoint
+     * @param directX direction in X (left/right)
+     * @param directY direction in Y (up/down)
      */
    public Line(Point startpoint, float directX, float directY) {
 		this.startPoint = startpoint;
@@ -68,10 +70,10 @@ public class Line extends GeomElement implements Cloneable, Edge {
     /**
      * Checks whether a point is left oder right from this line.
      *
-     * @param vPoint point
+     * @param point
      * @return int <VAR>POINT_LEFT</VAR>, <VAR>POINT_RIGHT</VAR> or <VAR>POINT_ONEDGE</VAR> if point lies on the line.
      */
-   public int pointTest(Point point) {
+   public int pointTest(@NonNull Point point) {
 		double ax = startPoint.getX();
 		double ay = startPoint.getY();
 		double bx = ax+directionX;
@@ -91,7 +93,8 @@ public class Line extends GeomElement implements Cloneable, Edge {
 		return line;
    }
 
-   public Point intersect(Edge edge) {
+	@Nullable
+	public Point intersect(@NonNull Edge edge) {
 		if(edge instanceof Segment)
 			return ((Segment)edge).intersect(this);
 		if(edge instanceof Ray)
@@ -134,7 +137,8 @@ public class Line extends GeomElement implements Cloneable, Edge {
 		return grad;
 	}
 
-   public Segment clipTo(float xmin, float ymin, float xmax, float ymax) {
+	@NonNull
+	public Segment clipTo(float xmin, float ymin, float xmax, float ymax) {
 	   float x0 = startPoint.getX();
 	   float y0 = startPoint.getY();
 	   float x1 = x0, y1 = y0, x2 = x0, y2 = y0;
@@ -151,13 +155,14 @@ public class Line extends GeomElement implements Cloneable, Edge {
 		    y2 = y0 + (x2-x0)/directionX*directionY;
 		} else {
 		    if(directionY > 0.0f)
-			y2 = ymax;
+				y2 = ymax;
 		    else
-			y2 = ymin;
+				y2 = ymin;
 		}
-		float koords[] = Segment.clipping(x1,y1,x2,y2,xmin,ymin,xmax,ymax);
-		if(koords == null) return null;
-		return new Segment(koords[0],koords[1],koords[2],koords[3]);
+		float[] koords = Segment.clipping(x1,y1,x2,y2,xmin,ymin,xmax,ymax);
+		Segment segment = new Segment(koords[0],koords[1],koords[2],koords[3]);
+		segment.setColor(getColor());
+		return segment;
    }
 
    @NonNull
@@ -165,7 +170,7 @@ public class Line extends GeomElement implements Cloneable, Edge {
 		return startPoint.toString()+"-Line: dx="+directionX+",dy="+directionY;
    }
 
-   public void paint(Canvas graphics) {
+   public void paint(@NonNull Canvas graphics) {
 	   float x0 = startPoint.getX();
 	   float y0 = startPoint.getY();
 		float x1 = x0, y1= y0, x2 = x1, y2 = y1;

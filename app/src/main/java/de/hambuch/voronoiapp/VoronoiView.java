@@ -8,39 +8,60 @@ import android.graphics.drawable.BitmapDrawable;
 import android.util.AttributeSet;
 import android.view.View;
 
-import java.util.Enumeration;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import de.hambuch.voronoiapp.algo.ConvexHull;
 import de.hambuch.voronoiapp.algo.DelaunayTriangulation;
 import de.hambuch.voronoiapp.algo.VoronoiDiagram;
 import de.hambuch.voronoiapp.algo.VoronoiDiagramCircle;
-import de.hambuch.voronoiapp.geometry.GeomElement;
 import de.hambuch.voronoiapp.geometry.Point;
 
+/**
+ * View that display the diagram.
+ */
 public class VoronoiView extends View {
 
+	public enum DrawableElement {
+		VORONOI, VORONOICOLORED, DELAUNAY, CONVEXHULL, MAXCIRCLE;
+	}
+
 	private DelaunayTriangulation triang;
-	private GeomElement drawable = null;
+	private VoronoiDiagram drawableVoronoi;
+	private DelaunayTriangulation drawableDelaunay;
+	private VoronoiDiagramCircle drawableCircle;
+	private ConvexHull drawableConvex;
+
 	private BitmapDrawable background = null;
 
-	public VoronoiView(Context context, AttributeSet attrs, int defStyle) {
+	private final Set<DrawableElement> elementsToDraw = new HashSet<>();
+
+	public VoronoiView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 		setClickable(true);
 	}
 
-	public VoronoiView(Context context) {
+	public VoronoiView(@NonNull Context context) {
 		this(context, null, 0);
 	}
 
-	public VoronoiView(Context context, AttributeSet attrs) {
+	public VoronoiView(@NonNull Context context, @Nullable AttributeSet attrs) {
 		this(context, attrs, 0);
 	}
 
-	public void setTriangulation(DelaunayTriangulation triang) {
+	public void setTriangulation(@NonNull DelaunayTriangulation triang) {
 		this.triang = triang;
+		this.drawableVoronoi = new VoronoiDiagram(triang);
+		this.drawableDelaunay = triang;
+		this.drawableCircle = new VoronoiDiagramCircle(triang);
+		this.drawableConvex = new ConvexHull(triang);
 	}
 
-	public void setBackgroundBitmap(Bitmap bitmap) {
+	public void setBackgroundBitmap(@Nullable Bitmap bitmap) {
 		if (bitmap == null ) {
 			this.background = null;
 		}
@@ -54,7 +75,7 @@ public class VoronoiView extends View {
 		return super.performClick();
 	}
 
-	public void onDraw(Canvas canvas) {
+	public void onDraw(@NonNull Canvas canvas) {
 		drawInternal(canvas);
 	}
 
@@ -66,13 +87,52 @@ public class VoronoiView extends View {
 		else
 			canvas.drawColor(Color.WHITE);
 
-		if (drawable != null) {
-			drawable.paint(canvas);
+		// draw the elements, if enabled, can be draw over each other
+		if(elementsToDraw.contains(DrawableElement.VORONOICOLORED) && drawableVoronoi != null) {
+			drawableVoronoi.setFill(true); // TODO: not implemented yet
+			drawableVoronoi.paint(canvas);
+		} else if (elementsToDraw.contains(DrawableElement.VORONOI) && drawableVoronoi != null) {
+			drawableVoronoi.setFill(false);
+			drawableVoronoi.paint(canvas);
+		}
+		if (elementsToDraw.contains(DrawableElement.DELAUNAY) && drawableDelaunay != null) {
+			drawableDelaunay.paint(canvas);
+		}
+		if (elementsToDraw.contains(DrawableElement.CONVEXHULL) && drawableConvex != null) {
+			drawableConvex.paint(canvas);
+		}
+		if (elementsToDraw.contains(DrawableElement.MAXCIRCLE) && drawableCircle != null) {
+			drawableCircle.paint(canvas);
 		}
 
-		for (Enumeration<Point> p = triang.points(); p.hasMoreElements(); ) {
-			p.nextElement().paint(canvas);
+		// draw all points
+		for (Iterator<Point> p = triang.points(); p.hasNext(); ) {
+			p.next().paint(canvas);
 		}
+	}
+
+	@Nullable
+	protected ConvexHull getConvexHull() {
+		if (elementsToDraw.contains(DrawableElement.CONVEXHULL) && drawableConvex != null) {
+			return drawableConvex;
+		} else
+			return null;
+	}
+
+	@Nullable
+	protected VoronoiDiagram getVoronoiDiagram() {
+		if (elementsToDraw.contains(DrawableElement.VORONOI) && drawableVoronoi != null) {
+			return drawableVoronoi;
+		} else
+			return null;
+	}
+
+	@Nullable
+	protected DelaunayTriangulation getDelaunayTriang() {
+		if (elementsToDraw.contains(DrawableElement.DELAUNAY) && drawableDelaunay != null) {
+			return drawableDelaunay;
+		} else
+			return null;
 	}
 
 	/**
@@ -86,23 +146,8 @@ public class VoronoiView extends View {
 		return bitmap;
 	}
 
-	public void showDelaunay() {
-		drawable = triang;
-		invalidate();
-	}
-
-	public void showVoronoi() {
-		drawable = new VoronoiDiagram(triang);
-		invalidate();
-	}
-
-	public void showConvexHull() {
-		drawable = new ConvexHull(triang);
-		invalidate();
-	}
-
-	public void showMaxCircle() {
-		drawable = new VoronoiDiagramCircle(triang);
-		invalidate();
+	public void setDrawables(@NonNull Set<DrawableElement> drawables) {
+		this.elementsToDraw.clear();
+		this.elementsToDraw.addAll(drawables);
 	}
 }

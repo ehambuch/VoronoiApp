@@ -1,12 +1,16 @@
 package de.hambuch.voronoiapp.algo;
 
 import android.graphics.Canvas;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-import java.util.Enumeration;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
+import de.hambuch.voronoiapp.VoronoiApp;
 import de.hambuch.voronoiapp.geometry.GeomElement;
 import de.hambuch.voronoiapp.geometry.Point;
 import de.hambuch.voronoiapp.geometry.Segment;
@@ -24,7 +28,7 @@ import de.hambuch.voronoiapp.geometry.Triangle;
 public class DelaunayTriangulation extends GeomElement {
 
 	public interface Visitor {
-		public void visit(DelauTriangle triangle);
+		public void visit(@NonNull DelauTriangle triangle);
 	}
 	
 	/* reference to first triangle of triangulation */
@@ -41,10 +45,10 @@ public class DelaunayTriangulation extends GeomElement {
 	private DelauTriangle firstColTriag, lastColTriag;
 
 	/* all points in this triangulation */
-	private Vector<Point> allPoints;
+	private List<Point> allPoints;
 
 	public DelaunayTriangulation() {
-		allPoints = new Vector<Point>();
+		allPoints = new ArrayList<>();
 	}
 
 	public void clear() {
@@ -59,6 +63,7 @@ public class DelaunayTriangulation extends GeomElement {
 		allCollinear = true;
 	}
 
+	@Nullable
 	public Point findPoint(float x, float y, float d) {
 		Point thisP = new Point(x, y);
 		DelauTriangle t = find(firstTriangle, thisP);
@@ -78,16 +83,15 @@ public class DelaunayTriangulation extends GeomElement {
 	 * Insert a new point into the triangulation. Please make sure, that p isn't
 	 * already inserted!
 	 * 
-	 * @param Point
-	 *            p
+	 * @param p
 	 * @throws VoronoiException
 	 */
-	public void insertPoint(Point p) throws VoronoiException {
+	public void insertPoint(@NonNull Point p) throws VoronoiException {
 		if (allPoints.contains(p))
 			throw new VoronoiException("Point " + p
 					+ " already in triangulation");
 		points++;
-		allPoints.addElement(p);
+		allPoints.add(p);
 
 		if (points == 1) {
 			firstPoint = p;
@@ -219,13 +223,12 @@ public class DelaunayTriangulation extends GeomElement {
 	/**
 	 * Delete a point from the Delaunay triangulation.
 	 * 
-	 * @param Point
-	 *            p
+	 * @param p
 	 */
-	public void deletePoint(Point p) {
+	public void deletePoint(@NonNull Point p) {
 		if (allPoints.contains(p)) {
 			points--;
-			allPoints.removeElement(p);
+			allPoints.remove(p);
 			/*
 			 * we don't have a special algorithm for deleting points, so we
 			 * rebuild the whole structure. Better have a look at: O. Devillers:
@@ -240,12 +243,11 @@ public class DelaunayTriangulation extends GeomElement {
 	 * Moves the position of a point in this triangulation to new coordinates
 	 * (newX, newY).
 	 * 
-	 * @param Point
-	 *            p
-	 * @param double newX
-	 * @param double newY
+	 * @param p
+	 * @param newX
+	 * @param newY
 	 */
-	public void movePoint(Point p, float newX, float newY) {
+	public void movePoint(@NonNull Point p, float newX, float newY) {
 		/*
 		 * we simply rebuild everything. We have to make sure, that this point
 		 * doens't equal to another point of our triangulation!
@@ -262,10 +264,8 @@ public class DelaunayTriangulation extends GeomElement {
 	 * Extend the hull with a point <VAR>p</VAR> that lies in one of the hull
 	 * triangles <VAR>t</VAR>.
 	 * 
-	 * @param DelauTriangle
-	 *            t a hull triangle containing p
-	 * @param Point
-	 *            p new point to add
+	 * @param t a hull triangle containing p
+	 * @param p new point to add
 	 * @return DelauTriangle one of a real triangle near to p
 	 */
 	private DelauTriangle extendHull(DelauTriangle t, Point p) {
@@ -303,11 +303,9 @@ public class DelaunayTriangulation extends GeomElement {
 	 * by extending all hull triangles with <VAR>p</VAR> to real triangles and
 	 * adding one new hull triangle.
 	 * 
-	 * @param DelauTriangle
-	 *            t a hull triangle containing p
-	 * @param Point
-	 *            p a new point to add
-	 * @see extendHull
+	 * @param t a hull triangle containing p
+	 * @param p a new point to add
+	 * @see #extendHull
 	 * @return DelauTriangle the new hull triangle
 	 */
 	private DelauTriangle extendclockwise(DelauTriangle t, Point p) {
@@ -331,12 +329,10 @@ public class DelaunayTriangulation extends GeomElement {
 	/**
 	 * Extend the hull in counterclockwise order.
 	 * 
-	 * @param DelauTriangle
-	 *            t a triangle that contains p
-	 * @param Point
-	 *            p
+	 * @param t a triangle that contains p
+	 * @param p
 	 * @return DelauTriangle a new hull triangle
-	 * @see extendclockwise
+	 * @see #extendclockwise
 	 */
 	private DelauTriangle extendcounterclock(DelauTriangle t, Point p) {
 		DelauTriangle prevT = t;
@@ -359,10 +355,8 @@ public class DelaunayTriangulation extends GeomElement {
 	/**
 	 * Extend a inner triangle containing p to three new triangles.
 	 * 
-	 * @param DelauTriangle
-	 *            t a triangle containing p
-	 * @param Point
-	 *            p new point to add (into t)
+	 * @param t a triangle containing p
+	 * @param p new point to add (into t)
 	 * @return DelauTriangle one of the new triangles
 	 */
 	private DelauTriangle extendTriag(DelauTriangle t, Point p) {
@@ -402,13 +396,12 @@ public class DelaunayTriangulation extends GeomElement {
 	 * Locate the triangle that contains a given point in the interior or on the
 	 * border.
 	 * 
-	 * @param DelauTriangle
-	 *            start the triangle at which we start searching
-	 * @param Point
-	 *            p the point to locate
+	 * @param start the triangle at which we start searching
+	 * @param p the point to locate
 	 * @return DelauTriangle a triangle containing <VAR>p</VAR>
 	 */
-	public DelauTriangle find(DelauTriangle start, Point p) {
+	@Nullable
+	public DelauTriangle find(@NonNull DelauTriangle start, @NonNull Point p) {
 		boolean found = false;
 		while (!found) {
 			if (start == null)
@@ -434,7 +427,7 @@ public class DelaunayTriangulation extends GeomElement {
 							.getPointA(), p) == Segment.POINT_RIGHT) {
 						start = start.neighbourCA;
 					} else {
-						System.err.println("Error locating point " + p
+						Log.e(VoronoiApp.APPNAME, "Error locating point " + p
 								+ " - should not happen!");
 						found = true;
 					}
@@ -444,7 +437,7 @@ public class DelaunayTriangulation extends GeomElement {
 							p) == Segment.POINT_RIGHT)
 						start = start.neighbourAB;
 					else
-						System.err.println("Internal error find(" + start + ","
+						Log.e(VoronoiApp.APPNAME,"Internal error find(" + start + ","
 								+ p + ")");
 					// andere Faelle sollte nicht vorkommen !!
 				}
@@ -456,8 +449,7 @@ public class DelaunayTriangulation extends GeomElement {
 	/**
 	 * Do an edge flip of the triangle <VAR>t</VAR> with it's AB-neighbour.
 	 * 
-	 * @param DelauTriangle
-	 *            t
+	 * @param t
 	 */
 	private void flip(DelauTriangle t) {
 		/* from VoroGlide */
@@ -481,7 +473,7 @@ public class DelaunayTriangulation extends GeomElement {
 			v.neighbourAB = u.neighbourAB;
 			t.neighbourAB = u.neighbourCA;
 		} else {
-			System.err.println("Error in flip." + t);
+			Log.e(VoronoiApp.APPNAME,"Error in flip." + t);
 			return;
 		}
 
@@ -510,14 +502,13 @@ public class DelaunayTriangulation extends GeomElement {
 		firstPoint = null;
 		lastPoint = null;
 		points = 0;
-		Vector<Point> oldPoints = allPoints;
-		allPoints = new Vector<Point>();
-		Enumeration<Point> enume = oldPoints.elements();
-		while (enume.hasMoreElements()) {
+		List<Point> oldPoints = allPoints;
+		allPoints = new ArrayList<>(oldPoints.size());
+		for (Iterator<Point> iterator = oldPoints.iterator(); iterator.hasNext(); ) {
 			try {
-				insertPoint((Point) enume.nextElement());
+				insertPoint(iterator.next());
 			} catch (Exception e) {
-				e.printStackTrace();
+				Log.w(VoronoiApp.APPNAME, e);
 			}
 		}
 	}
@@ -528,6 +519,7 @@ public class DelaunayTriangulation extends GeomElement {
 	 * @return DelauTriangle oder <VAR>null</VAR> if empty.
 	 * @see DelauTriangle
 	 */
+	@Nullable
 	public DelauTriangle getFirstTriangle() {
 		return firstTriangle;
 	}
@@ -538,6 +530,7 @@ public class DelaunayTriangulation extends GeomElement {
 	 * @return DelauTriangle oder <VAR>null</VAR> if empty.
 	 * @see DelauTriangle
 	 */
+	@Nullable
 	public DelauTriangle getFirstHullTriangle() {
 		return firstHullTriangle;
 	}
@@ -557,12 +550,12 @@ public class DelaunayTriangulation extends GeomElement {
 	public String toString() {
 		DelauTriangle t = firstTriangle;
 		resetVisited(t);
-		StringBuffer text = new StringBuffer();
+		StringBuilder text = new StringBuilder();
 		dotoString(t, text);
 		return text.toString();
 	}
 
-	private void dotoString(DelauTriangle t, StringBuffer text) {
+	private void dotoString(DelauTriangle t, StringBuilder text) {
 		if (t != null) {
 			if (!t.visited) {
 				t.visited = true;
@@ -580,11 +573,10 @@ public class DelaunayTriangulation extends GeomElement {
 	 * exclusive access to this data structure. Don't call other methods while
 	 * walking through the triangles!!
 	 * 
-	 * @param DelauTriangle
-	 *            t the triangle to start with (take getFirstTriangle()).
+	 * @param t the triangle to start with (take getFirstTriangle()).
 	 * @see DelauTriangle
 	 */
-	public void resetVisited(DelauTriangle t) {
+	public void resetVisited(@Nullable DelauTriangle t) {
 		if (t != null) {
 			t.visited = false;
 			t.dcelAB = null;
@@ -602,7 +594,7 @@ public class DelaunayTriangulation extends GeomElement {
 		}
 	}
 
-	public void paint(Canvas g) {
+	public void paint(@NonNull Canvas g) {
 		// g.setColor(color);
 		resetVisited(firstTriangle);
 		paintit(g, firstTriangle);
@@ -644,7 +636,7 @@ public class DelaunayTriangulation extends GeomElement {
 	 * 
 	 * @param visitor the visitor
 	 */
-	public void visitTriangles(Visitor visitor) {
+	public void visitTriangles(@NonNull Visitor visitor) {
 		resetVisited(firstTriangle);
 		visitTriangles(visitor, firstTriangle);
 	}
@@ -664,10 +656,11 @@ public class DelaunayTriangulation extends GeomElement {
 	/**
 	 * return an Enumeration of all sites.
 	 * 
-	 * @return Enumeration
+	 * @return iterator over all points
 	 */
-	public Enumeration<Point> points() {
-		return allPoints.elements();
+	@NonNull
+	public Iterator<Point> points() {
+		return allPoints.iterator();
 	}
 
 	/**

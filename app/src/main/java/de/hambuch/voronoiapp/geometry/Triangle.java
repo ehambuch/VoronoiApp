@@ -1,6 +1,9 @@
 package de.hambuch.voronoiapp.geometry;
 
 import android.graphics.Canvas;
+import android.graphics.Path;
+
+import androidx.annotation.NonNull;
 
 /**
  * This class represents a triangle in R<SUP>2</SUP>, definied by three points.
@@ -38,27 +41,30 @@ public class Triangle extends GeomElement {
 		this.pointC = pointC;
 	}
 
+	@NonNull
 	public Point getPointA() {
 		return pointA;
 	}
 
+	@NonNull
 	public Point getPointB() {
 		return pointB;
 	}
 
+	@NonNull
 	public Point getPointC() {
 		return pointC;
 	}
 
-	public void setPointA(Point pointA) {
+	public void setPointA(@NonNull Point pointA) {
 		this.pointA = pointA;
 	}
 
-	public void setPointB(Point pointB) {
+	public void setPointB(@NonNull Point pointB) {
 		this.pointB = pointB;
 	}
 
-	public void setPointC(Point pointC) {
+	public void setPointC(@NonNull Point pointC) {
 		this.pointC = pointC;
 	}
 
@@ -68,7 +74,7 @@ public class Triangle extends GeomElement {
 	 *
 	 * @return double signed area of Triag(p,q,r)
 	 */
-	public static double signedArea(Point p, Point q, Point r) {
+	public static double signedArea(@NonNull Point p, @NonNull Point q, @NonNull Point r) {
 		return ((r.getX() - p.getX()) * (r.getY() + p.getY())+
 				(q.getX() - r.getX()) * (q.getY() + r.getY())+
 				(p.getX() - q.getX()) * (p.getY() + q.getY())) /2.0;
@@ -77,10 +83,10 @@ public class Triangle extends GeomElement {
 	/**
 	 * checks, if a points lies in (<VAR>INTRIANGLE</VAR>), out of (<VAR>OUTOFTRIANGLE<VAR>) or on the border (<VAR>ONTRIANGLE</VAR>)
 	 *
-	 * @param Point point to check
+	 * @param point to check
 	 * @return int one of the values <VAR>INTRIANGLE, OUTOFTRIANGLE, ONTRIANGLE</VAR>
 	 */
-	public int pointInTriangle(Point point) {
+	public int pointInTriangle(@NonNull Point point) {
 		Point a=pointA, b=pointB, c=pointC;
 		if(area() < 0.0) {
 			/* we need to ensure the orientation */
@@ -108,12 +114,14 @@ public class Triangle extends GeomElement {
 		return signedArea(pointA, pointB, pointC);
 	}
 
+	@NonNull
 	public String toString() {
 		return pointA+"-"+pointB+"-"+pointC;
 	}
 
+	@NonNull
 	public Object clone() {
-		return new Triangle(pointA, pointB, pointC, getColor());
+		return new Triangle(pointA, pointB, pointC, getLinePaint().getColor());
 	}
 
 	/**
@@ -129,10 +137,19 @@ public class Triangle extends GeomElement {
 		}
 	}
 
-	public void paint(Canvas graphics) {
-		graphics.drawLine((float)pointA.getX(), (float)pointA.getY(), (float)pointB.getX(), (float)pointB.getY(), getLinePaint());
-		graphics.drawLine((float)pointB.getX(), (float)pointB.getY(), (float)pointC.getX(), (float)pointC.getY(), getLinePaint());
-		graphics.drawLine((float)pointC.getX(), (float)pointC.getY(), (float)pointA.getX(), (float)pointA.getY(), getLinePaint());
+	public void paint(@NonNull Canvas graphics) {
+		if(getFillPaint() != null) {
+			Path path = new Path();
+			path.setFillType(Path.FillType.EVEN_ODD);
+			path.moveTo((float) pointA.getX(), (float) pointA.getY());
+			path.lineTo((float) pointB.getX(), (float) pointB.getY());
+			path.lineTo((float) pointC.getX(), (float) pointC.getY());
+			path.close();
+			graphics.drawPath(path, getFillPaint());
+		}
+		graphics.drawLine((float) pointA.getX(), (float) pointA.getY(), (float) pointB.getX(), (float) pointB.getY(), getLinePaint());
+		graphics.drawLine((float) pointB.getX(), (float) pointB.getY(), (float) pointC.getX(), (float) pointC.getY(), getLinePaint());
+		graphics.drawLine((float) pointC.getX(), (float) pointC.getY(), (float) pointA.getX(), (float) pointA.getY(), getLinePaint());
 	}
 
 }

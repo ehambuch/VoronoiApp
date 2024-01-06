@@ -2,6 +2,9 @@ package de.hambuch.voronoiapp.algo;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
+
+import androidx.annotation.NonNull;
+
 import de.hambuch.voronoiapp.geometry.Point;
 import de.hambuch.voronoiapp.geometry.Segment;
 import de.hambuch.voronoiapp.geometry.SimplePolygon;
@@ -50,9 +53,11 @@ public class ConvexHull extends de.hambuch.voronoiapp.geometry.GeomElement {
 		return 1;
     }
 
+	@NonNull
 	public SimplePolygon toPolygon() {
 		DelauTriangle tstart = delaunay.getFirstHullTriangle();
 		SimplePolygon poly = new SimplePolygon();
+		poly.setColor(getColor());
 		if(tstart != null) {
 			DelauTriangle t = tstart;
 			do {
@@ -63,7 +68,7 @@ public class ConvexHull extends de.hambuch.voronoiapp.geometry.GeomElement {
 		return poly;
 	}
 
-    public void paint(Canvas g) {
+    public void paint(@NonNull Canvas g) {
 		DelauTriangle tstart = delaunay.getFirstHullTriangle();
 		if(tstart != null) {
 		    DelauTriangle t = tstart;

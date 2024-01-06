@@ -2,6 +2,7 @@ package de.hambuch.voronoiapp.geometry;
 
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * A class that provides a double-connected edge list (DCEL).
@@ -95,9 +96,9 @@ public class DCEL {
 	 * connect an other DCEL to this one, depending on the common point.
 	 * Call <CODE>next.connect(this)</CODE> for reverse connection.
 	 *
-	 * @param DCEL next DCEL to connect with this
+	 * @param next DCEL to connect with this
 	 */
-    public void connect(DCEL next) {
+    public void connect(@Nullable DCEL next) {
 		if(next != null) {
 			if(point2 != null) {
 				if(point2.equals(next.getPoint1()) || point2.equals(next.getPoint2())) {

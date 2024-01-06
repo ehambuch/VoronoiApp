@@ -1,6 +1,9 @@
 package de.hambuch.voronoiapp.geometry;
 
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 /**
  * Edge can either be a Segment, a Ray or a Line.
  *
@@ -35,13 +38,14 @@ public interface Edge {
     /**
      * Test on intersection of two edges.
      *
-     * @param Edge other edge to test with
+     * @param edge to test with
      * @return Point a point of this intersection or <VAR>null</VAR>
      * @see Ray
      * @see Line
      * @see Segment
      */
-    abstract public Point intersect(Edge edge);
+    @Nullable
+    abstract public Point intersect(@NonNull Edge edge);
 
     /**
      * Return the gradient angle of this edge.
@@ -53,7 +57,7 @@ public interface Edge {
     /**
      * Clip an edge to a visible area (xmin,ymin)-(xmax,ymax)
      *
-     * @param double xmin, ymin, xmax, ymax the area the edge should be clipped to
+     * @param xmin, ymin, xmax, ymax the area the edge should be clipped to
      * @return Segment a segment in the clipping area or <VAR>null</VAR> if the edge needn't be displayed
      */
     abstract public Segment clipTo(float xmin, float ymin, float xmax, float ymax);

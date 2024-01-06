@@ -45,6 +45,7 @@ public class Point extends GeomElement implements Cloneable {
 
 	public Point(float x, float y, int color) {
 		super(color);
+		setFillColor(color);
 		this.x = x;
 		this.y = y;
 	}
@@ -70,12 +71,14 @@ public class Point extends GeomElement implements Cloneable {
 		return "("+x+","+y+")";
 	}
 
+	@Override
 	@NonNull
 	public Object clone() {
-		return new Point(x,y,getColor());
+		return new Point(x,y,getLinePaint().getColor());
 	}
 
-   public static Point getInfinityPoint() {
+	@NonNull
+	public static Point getInfinityPoint() {
 		return inftyPoint;
    }
 
@@ -96,10 +99,10 @@ public class Point extends GeomElement implements Cloneable {
 	/**
 	 * Calculates the euclid distance to a point.
 	 *
-	 * @param Point toPoint
+	 * @param toPoint
 	 * @return double distance between this point and <VAR>toPoint</VAR>
 	 */
-	public float distance(Point toPoint) {
+	public float distance(@NonNull Point toPoint) {
 		float x2 = toPoint.getX()-x;
 		float y2 = toPoint.getY()-y;
 		return (float)Math.sqrt(x2*x2+y2*y2);
@@ -108,10 +111,10 @@ public class Point extends GeomElement implements Cloneable {
 	/**
 	 * Compares two points in lexicographic order
 	 *
-	 * @param Point secondPoint
+	 * @param secondPoint
 	 * @return int -1 if (this &lt; second), 1 if (this &gt; second) and 0 if (this == second)
 	 */
-	public int compare(Point toPoint) {
+	public int compare(@NonNull Point toPoint) {
 		if(x < toPoint.getX() || (x == toPoint.getX() && y < toPoint.getY())) return -1;
 		if(x > toPoint.getX() || (x == toPoint.getX() && y > toPoint.getY())) return 1;
 		if(x == toPoint.getX() && y == toPoint.getY()) return 0;
@@ -119,7 +122,8 @@ public class Point extends GeomElement implements Cloneable {
 		return 0;
 	}
 
-	public void paint(Canvas graphics) {
+	public void paint(@NonNull Canvas graphics) {
+		assert getFillPaint() != null;
 		graphics.drawCircle((float)x, (float)y, 6, getFillPaint());
 	}
 }

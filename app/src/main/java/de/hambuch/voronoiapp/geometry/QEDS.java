@@ -55,7 +55,7 @@ public class QEDS extends DCEL {
 	 * connect an other QEDS to this one on the left side, depending on the common point.
 	 * Call <CODE>next.connect(this)</CODE> for reverse connection.
 	 *
-	 * @param QEDS next QEDS to connect with this left hand
+	 * @param next QEDS to connect with this left hand
 	 */
     public void connectLeft(QEDS next) {
 		if(next != null) {
@@ -77,7 +77,7 @@ public class QEDS extends DCEL {
 	/**
 	 * connect to the right hand side of this QEDS.
 	 *
-	 * @param QEDS next QEDS to connect with right hand
+	 * @param next QEDS to connect with right hand
 	 */
 	public void connectRight(QEDS next) {
 		connect(next); /* use DCEL.connect */

@@ -1,9 +1,14 @@
 package de.hambuch.voronoiapp.algo;
 
-import java.util.Enumeration;
-
 import android.graphics.Canvas;
 import android.graphics.Color;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import java.util.Iterator;
+import java.util.List;
+
 import de.hambuch.voronoiapp.geometry.GeomElement;
 import de.hambuch.voronoiapp.geometry.Point;
 import de.hambuch.voronoiapp.geometry.QEDS;
@@ -27,37 +32,42 @@ import de.hambuch.voronoiapp.geometry.Segment;
 public class VoronoiDiagram extends GeomElement {
 
 	/* the construction is based on a delaunay triangulation */
+	@NonNull
 	protected DelaunayTriangulation delaunay;
+
+	private boolean fillColors = false;
 
 	public VoronoiDiagram() {
 		super(Color.BLUE);
 		delaunay = new DelaunayTriangulation();
 	}
 
-	public VoronoiDiagram(DelaunayTriangulation delaunay) {
+	public VoronoiDiagram(@NonNull DelaunayTriangulation delaunay) {
 		super(Color.BLUE);
 		this.delaunay = delaunay;
+	}
+
+	public void setFill(boolean fill) {
+		this.fillColors = fill;
 	}
 
 	/**
 	 * insert a new site to this voronoi diagram. Make sure, that the diagrams
 	 * doensn't alreays contain the new site.
 	 * 
-	 * @param Point
-	 *            point the new site
+	 * @param point the new site
 	 * @throws VoronoiException
 	 */
-	public void insertPoint(Point point) throws VoronoiException {
+	public void insertPoint(@NonNull Point point) throws VoronoiException {
 		delaunay.insertPoint(point);
 	}
 
 	/**
 	 * delete a site from the voronoi diagram.
 	 * 
-	 * @param Point
-	 *            point site to delete
+	 * @param point site to delete
 	 */
-	public void deletePoint(Point point) {
+	public void deletePoint(@NonNull Point point) {
 		delaunay.deletePoint(point);
 	}
 
@@ -65,12 +75,11 @@ public class VoronoiDiagram extends GeomElement {
 	 * move a site in this voronoi diagram to a new position (newx, newy).
 	 * Please make sure, that no two sites share the same position!
 	 * 
-	 * @param Point
-	 *            point the site to move
-	 * @param double newx new x coordinate
-	 * @param double newy new y coordinate the site is moved to
+	 * @param point the site to move
+	 * @param newx new x coordinate
+	 * @param newy new y coordinate the site is moved to
 	 */
-	public void movePoint(Point point, float newx, float newy) {
+	public void movePoint(@NonNull Point point, float newx, float newy) {
 		delaunay.movePoint(point, newx, newy);
 	}
 
@@ -79,7 +88,8 @@ public class VoronoiDiagram extends GeomElement {
 	 * 
 	 * @return Enumeration an enumeration of Points
 	 */
-	public Enumeration<Point> points() {
+	@NonNull
+	public Iterator<Point> points() {
 		return delaunay.points();
 	}
 
@@ -97,13 +107,13 @@ public class VoronoiDiagram extends GeomElement {
 	 * only one point this will return a region without any bounds (the full
 	 * R<SUP>2</SUP>).
 	 * 
-	 * @param Point
-	 *            p a site of this voronoi diagram.
+	 * @param p a site of this voronoi diagram.
 	 * @return Region the region of p or <VAR>null</VAR> in case of error.
 	 * @see Region
 	 */
 
-	public Region toRegion(Point p) {
+	@NonNull
+	public Region toRegion(@NonNull Point p) {
 		Region region = new Region(p);
 		if (delaunay.size() == 0) {
 			return null;
@@ -188,12 +198,12 @@ public class VoronoiDiagram extends GeomElement {
 	 * Inserts a new site temporarely and returns the new created region of this
 	 * site. Make sure, that the site is not already in the diagram!
 	 * 
-	 * @param Point
-	 *            p the new site
+	 * @param  p the new site
 	 * @return Region the new region of p or <VAR>null</VAR> in case of error
-	 * @see toRegion
+	 * @see #toRegion
 	 */
-	public Region toRegionNewPoint(Point p) {
+	@NonNull
+	public Region toRegionNewPoint(@NonNull Point p) {
 		try {
 			insertPoint(p);
 			Region region = toRegion(p);
@@ -208,10 +218,8 @@ public class VoronoiDiagram extends GeomElement {
 	 * returns five points that describes the both rays bounding an open region.
 	 * Make sure that <VAR>p</VAR> is point A of <VAR>t</VAR> !
 	 * 
-	 * @param DelauTriangle
-	 *            t a halfplane
-	 * @param Point
-	 *            p one of the point on t
+	 * @param t a halfplane
+	 * @param p one of the point on t
 	 * @return Point[5] five points describing the open region
 	 */
 
@@ -239,14 +247,14 @@ public class VoronoiDiagram extends GeomElement {
 	/**
 	 * locate the voronoi site that is nearest to the given point p
 	 * 
-	 * @param Point
-	 *            p a query point
+	 * @param p a query point
 	 * @return Point a voronoi point nearest to p (may be <VAR>null</VAR> if
 	 *         voronoi diagram empty)
 	 */
-	public Point pointLocation(Point p) {
+	@Nullable
+	public Point pointLocation(@NonNull Point p) {
 		if (size() == 1) {
-			return (Point) delaunay.points().nextElement();
+			return (Point) delaunay.points().next();
 		} else if (size() >= 2) {
 			DelauTriangle t = delaunay.find(delaunay.getFirstTriangle(), p);
 			if (t != null) {
@@ -297,11 +305,11 @@ public class VoronoiDiagram extends GeomElement {
 	/**
 	 * return the nearest neighbour of a voronoi site p
 	 * 
-	 * @param Point
-	 *            p a voronoi point
+	 * @param p a voronoi point
 	 * @return Point the nearest neighbour (a site of the neighbour cells)
 	 */
-	public Point nearestNeighbour(Point p) {
+	@Nullable
+	public Point nearestNeighbour(@NonNull Point p) {
 		if (size() <= 1)
 			return null;
 		double mindist = Double.POSITIVE_INFINITY;
@@ -354,8 +362,9 @@ public class VoronoiDiagram extends GeomElement {
 	 * 
 	 * @return QEDS the voronoi diagram embedded in a QEDS oder <VAR>null</VAR>.
 	 * @see QEDS
-	 * @see DCEL
+	 * @see de.hambuch.voronoiapp.geometry.DCEL
 	 */
+	@Nullable
 	public QEDS structure() {
 		DelauTriangle t = delaunay.getFirstTriangle();
 		if (!delaunay.areCollinear()) {
@@ -461,7 +470,7 @@ public class VoronoiDiagram extends GeomElement {
 		} // t != null
 	}
 
-	public void paint(Canvas g) {
+	public void paint(@NonNull Canvas g) {
 		DelauTriangle t = delaunay.getFirstTriangle();
 		if (delaunay.areCollinear()) {
 			t = delaunay.getFirstHullTriangle();
@@ -538,6 +547,10 @@ public class VoronoiDiagram extends GeomElement {
 							ray.paint(g);
 						}
 					}
+					/* Fill cell */
+					if(this.fillColors) {
+						// TODO: use Path to fill an area
+					}
 					/* Rekursion */
 					if (!t1.visited) paintit(g, t1);
 					if (!t2.visited) paintit(g, t2);
@@ -557,6 +570,87 @@ public class VoronoiDiagram extends GeomElement {
 					}
 				}
 
+			}
+		}
+	}
+
+	/**
+	 * Converts the VoronoiDiagram into a list of geometric elements.
+	 *
+	 * @param toElements List of elements drawing the diagram.
+	 */
+	public void exportToElements(@NonNull List<GeomElement> toElements) {
+		final DelauTriangle t = delaunay.getFirstTriangle();
+		if (!delaunay.areCollinear()) {
+			delaunay.resetVisited(t);
+			exportit(t, toElements);
+		} // TODO: export for collinear
+	}
+
+	private void exportit(@Nullable DelauTriangle t, @NonNull List<GeomElement> toElements) {
+		if (t != null) {
+			if (!t.visited) {
+				t.visited = true;
+				DelauTriangle t1 = t.neighbourAB;
+				DelauTriangle t2 = t.neighbourBC;
+				DelauTriangle t3 = t.neighbourCA;
+				if (!t.isHalfplane()) {
+					Point c0 = t.circumCircle().getCenter();
+					Point c1;
+					if (!t1.visited) {
+						if (!t1.isHalfplane()) {
+							c1 = t1.circumCircle().getCenter();
+							toElements.add(new Segment(c0, c1, getLinePaint().getColor()));
+						} else {
+							Ray ray = new Ray(c0, -(t1.getPointB().getY() - t1
+									.getPointA().getY()), t1.getPointB().getX()
+									- t1.getPointA().getX());
+							ray.setColor(getColor());
+							toElements.add(ray);
+						}
+					}
+					if (!t2.visited) {
+						if (!t2.isHalfplane()) {
+							c1 = t2.circumCircle().getCenter();
+							toElements.add(new Segment(c0, c1, getLinePaint().getColor()));
+						} else {
+							Ray ray = new Ray(c0, -(t2.getPointB().getY() - t2
+									.getPointA().getY()), t2.getPointB().getX()
+									- t2.getPointA().getX());
+							ray.setColor(getColor());
+							toElements.add(ray);
+						}
+					}
+					if (!t3.visited) {
+						if (!t3.isHalfplane()) {
+							c1 = t3.circumCircle().getCenter();
+							toElements.add(new Segment(c0, c1, getLinePaint().getColor()));
+						} else {
+							Ray ray = new Ray(c0, -(t3.getPointB().getY() - t3
+									.getPointA().getY()), t3.getPointB().getX()
+									- t3.getPointA().getX());
+							ray.setColor(getColor());
+							toElements.add(ray);
+						}
+					}
+					/* Rekursion */
+					if (!t1.visited) exportit(t1, toElements);
+					if (!t2.visited) exportit(t2, toElements);
+					if (!t3.visited) exportit(t3, toElements);
+				} else {
+					/* t is a Halfplane */
+					if (!t1.visited) {
+						if (!t1.isHalfplane()) {
+							/* we have to visit only this neighbour */
+							Point c0 = t1.circumCircle().getCenter();
+							Ray ray = new Ray(c0, -(t.getPointB().getY() - t
+									.getPointA().getY()), t.getPointB().getX()
+									- t.getPointA().getX());
+							ray.setColor(getColor());
+							toElements.add(ray);
+						}
+					}
+				}
 			}
 		}
 	}

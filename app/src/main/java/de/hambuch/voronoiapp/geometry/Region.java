@@ -1,9 +1,12 @@
 package de.hambuch.voronoiapp.geometry;
 
+import android.graphics.Canvas;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.util.Enumeration;
 import java.util.Vector;
-
-import android.graphics.Canvas;
 
 /**
  * A (convex) voronoi region is a kind of an &quot;open polygon&quot; that may
@@ -39,15 +42,16 @@ public class Region extends Polygon implements Cloneable {
 		return false;
 	}
 
-	public void setKernelPoint(Point p) {
+	public void setKernelPoint(@NonNull Point p) {
 		this.innerPoint = p;
 	}
 
+	@NonNull
 	public Point getKernelPoint() {
 		return innerPoint;
 	}
 
-	public boolean pointInPolygon(Point point) {
+	public boolean pointInPolygon(@NonNull Point point) {
 		/*
 		 * connection between point and innerPoint may not cross any border
 		 * edges -> point is in (star-shaped) region.
@@ -80,13 +84,14 @@ public class Region extends Polygon implements Cloneable {
 	/**
 	 * Clips the region to an given rectangle (xmin, ymin)-(xmax, ymax)
 	 * 
-	 * @param double xmin
-	 * @param double ymin
-	 * @param double xmax
-	 * @param double ymax
+	 * @param xmin
+	 * @param ymin
+	 * @param xmax
+	 * @param ymax
 	 * @return Polygon the clipped polygon. May be <VAR>null</VAR> if invisible.
 	 */
 
+	@Nullable
 	public Polygon clipTo(float xmin, float ymin, float xmax, float ymax) {
 		/*
 		 * we try to close our region so that we can use the polygon clipping
@@ -171,10 +176,8 @@ public class Region extends Polygon implements Cloneable {
 	 * the same direction like <VAR>ray</VAR>. Make sure, that the startpoint of
 	 * <VAR>ray</VAR> is different from <VAR>from</VAR> !!!!
 	 * 
-	 * @param Ray
-	 *            a ray
-	 * @param Point
-	 *            from a point on the ray
+	 * @param ray
+	 * @param from a point on the ray
 	 * @return Point a new direction point for a ray with startpoint
 	 *         <VAR>from</VAR> and some direction line <VAR>ray</VAR>
 	 */
@@ -190,10 +193,9 @@ public class Region extends Polygon implements Cloneable {
 	 * paints the region either filled or only the borders (depending on
 	 * setFillColor()).
 	 * 
-	 * @param java
-	 *            .awt.Graphics g
+	 * @param g
 	 */
-	public void paint(Canvas g) {
+	public void paint(@NonNull Canvas g) {
 		if (fillColor > 0) {
 			Polygon poly = clipTo(0.0f, 0.0f, 5000.0f, 5000.0f); // besser
 																	// getClipBounds()
@@ -227,6 +229,7 @@ public class Region extends Polygon implements Cloneable {
 		} // if
 	}
 
+	@NonNull
 	public String toString() {
 		StringBuilder text = new StringBuilder("Region " + innerPoint + " :");
 		Enumeration<Point> enume = points.elements();
@@ -236,6 +239,7 @@ public class Region extends Polygon implements Cloneable {
 		return text.toString();
 	}
 
+	@NonNull
 	public Object clone() {
 		Region region = new Region(this.points, this.innerPoint);
 		region.setColor(getColor());

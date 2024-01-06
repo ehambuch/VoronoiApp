@@ -1,5 +1,7 @@
 package de.hambuch.voronoiapp.geometry;
 
+import androidx.annotation.NonNull;
+
 /**
  * A twin-edge data structure for our FCVD edges.
  * For rays one of the pointers <CODE>prevEdge</CODE> or <CODE>nextEdge</CODE>  * is <VAR>null</VAR>.
@@ -30,7 +32,7 @@ public class TEDS {
 
     public TEDS() {
     }
-    public TEDS(Point point1, Point point2, Point site) {
+    public TEDS(@NonNull Point point1, @NonNull Point point2, @NonNull Point site) {
 		this.point1 = point1;
 		this.point2 = point2;
 		this.voronoiPoint = site;

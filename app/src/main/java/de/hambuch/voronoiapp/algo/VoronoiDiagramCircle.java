@@ -2,6 +2,9 @@ package de.hambuch.voronoiapp.algo;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
+
+import androidx.annotation.NonNull;
+
 import de.hambuch.voronoiapp.geometry.Circle;
 import de.hambuch.voronoiapp.geometry.Point;
 
@@ -43,7 +46,7 @@ public class VoronoiDiagramCircle extends VoronoiDiagram {
 		super(delaunay);
 	}
 
-	public void paint(Canvas g) {
+	public void paint(@NonNull Canvas g) {
 		super.paint(g);
 		if (cursor != null) {
 			Point nearest = super.pointLocation(cursor);

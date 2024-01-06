@@ -3,6 +3,9 @@ package de.hambuch.voronoiapp.geometry;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 /**
  * Segment represents a line segment in R<SUP>2</SUP> defined by two points.
  * 
@@ -23,12 +26,16 @@ public class Segment extends GeomElement implements Edge, Cloneable {
 	/**
 	 * Create a segment defined by two points
 	 * 
-	 * @param Point
-	 *            startpoint
-	 * @param Point
-	 *            endpoint
+	 * @param startpoint
+	 * @param endpoint
 	 */
-	public Segment(Point startpoint, Point endpoint) {
+	public Segment(@NonNull Point startpoint, @NonNull Point endpoint) {
+		this.startPoint = startpoint;
+		this.endPoint = endpoint;
+	}
+
+	public Segment(@NonNull Point startpoint, @NonNull Point endpoint, int color) {
+		super(color);
 		this.startPoint = startpoint;
 		this.endPoint = endpoint;
 	}
@@ -41,15 +48,16 @@ public class Segment extends GeomElement implements Edge, Cloneable {
 	/**
 	 * Tests whether point lies left, right, on segment or before/after start-
 	 * or endpoint of segment.
-	 * 
-	 * @param Point
-	 *            point
+	 *
+	 * @param a
+	 * @param b
+	 * @param c
 	 * @return int <VAR>POINT_ONEDGE</VAR>,
 	 *         <VAR>POINT_LEFT</VAR>,<VAR>POINT_RIGHT</VAR>, or
 	 *         <VAR>POINT_BEFORE/BEHIND</VAR> if points lies before startpoint
 	 *         or after endpoint
 	 */
-	public static int pointTest(Point a, Point b, Point c) {
+	public static int pointTest(@NonNull Point a, @NonNull Point b, @NonNull Point c) {
 		float ax = a.getX();
 		float ay = a.getY();
 		float bx = b.getX();
@@ -96,11 +104,12 @@ public class Segment extends GeomElement implements Edge, Cloneable {
 		return POINT_ERROR;
 	}
 
-	public int pointTest(Point point) {
+	public int pointTest(@NonNull Point point) {
 		return pointTest(startPoint, endPoint, point);
 	}
 
-	public Point intersect(Edge edge) {
+	@Nullable
+	public Point intersect(@NonNull Edge edge) {
 		float x0 = startPoint.getX();
 		float y0 = startPoint.getY();
 		float x1 = endPoint.getX();
@@ -183,28 +192,32 @@ public class Segment extends GeomElement implements Edge, Cloneable {
 		return grad;
 	}
 
+	@NonNull
 	public Object clone() {
 		Segment seg = new Segment(startPoint, endPoint);
 		seg.setColor(getColor());
 		return seg;
 	}
 
-	public void setStartpoint(Point startpoint) {
+	public void setStartpoint(@NonNull Point startpoint) {
 		this.startPoint = startpoint;
 	}
 
-	public void setEndpoint(Point endpoint) {
+	public void setEndpoint(@NonNull Point endpoint) {
 		this.endPoint = endpoint;
 	}
 
+	@NonNull
 	public Point getStartpoint() {
 		return startPoint;
 	}
 
+	@NonNull
 	public Point getEndpoint() {
 		return endPoint;
 	}
 
+	@Nullable
 	public Segment clipTo(float xmin, float ymin, float xmax, float ymax) {
 		float koords[] = clipping(startPoint.getX(), startPoint.getY(),
 				endPoint.getX(), endPoint.getY(), xmin, ymin, xmax, ymax);
@@ -216,11 +229,12 @@ public class Segment extends GeomElement implements Edge, Cloneable {
 		return seg;
 	}
 
+	@NonNull
 	public String toString() {
 		return startPoint.toString() + "-" + endPoint.toString();
 	}
 
-	public void paint(Canvas graphics) {
+	public void paint(@NonNull Canvas graphics) {
 		drawSegment(graphics, startPoint, endPoint, getLinePaint());
 	}
 
@@ -228,11 +242,12 @@ public class Segment extends GeomElement implements Edge, Cloneable {
 	 * internal method for Cohen-Sutherland-Clipping. (see M.Berger,
 	 * Computergrafik mit Pascal, Adisson-Wesley)
 	 * 
-	 * @param double x1, y1, x2, y2 coordinates of a segment
-	 * @param double xmin, ymin, xmax, ymax clipping area
+	 * @param x1, y1, x2, y2 coordinates of a segment
+	 * @param xmin, ymin, xmax, ymax clipping area
 	 * @return double[4] new coordinates or <VAR>null</VAR> if segment is
 	 *         invisible (not in the clipping area)
 	 */
+	@NonNull
 	public static float[] clipping(float x1, float y1, float x2, float y2,
 			float xmin, float ymin, float xmax, float ymax) {
 		int dir1 = 0, dir2 = 0; /* Richtungen bestimmen */
@@ -331,14 +346,11 @@ public class Segment extends GeomElement implements Edge, Cloneable {
 	 * with <VAR>double</VAR> coordinates and is necessary because of Java Bug
 	 * 4252578. Graphics.drawLine() hangs up for coordinates greater 32767!
 	 * 
-	 * @param Graphics
-	 *            g
-	 * @param Point
-	 *            a
-	 * @param Point
-	 *            b
+	 * @param g
+	 * @param a
+	 * @param b
 	 */
-	public static void drawSegment(Canvas g, Point a, Point b, Paint paint) {
+	public static void drawSegment(@NonNull Canvas g, @NonNull Point a, @NonNull Point b, @NonNull Paint paint) {
 		float ax = a.getX(), ay = a.getY(), bx = b.getX(), by = b.getY();
 		/*
 		 * this is necessary because of Java Bug 4252578 (even in JDK1.3!!),

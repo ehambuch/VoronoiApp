@@ -2,6 +2,9 @@ package de.hambuch.voronoiapp.geometry;
 
 import android.graphics.Canvas;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 /**
  * This class provides a ray starting at a point and pointing in a given
  * direction.
@@ -11,6 +14,7 @@ import android.graphics.Canvas;
  */
 public class Ray extends GeomElement implements Cloneable, Edge {
 
+	@NonNull
 	protected Point startPoint;
 	protected float directionX;
 	protected float directionY;
@@ -19,12 +23,10 @@ public class Ray extends GeomElement implements Cloneable, Edge {
 	 * Create a ray that starts at <VAR>startpoint</VAR> in direction defined by
 	 * <VAR>directionpoint</VAR>
 	 * 
-	 * @param Point
-	 *            startpoint
-	 * @param Point
-	 *            directionpoint
+	 * @param startpoint
+	 * @param directionpoint
 	 */
-	public Ray(Point startpoint, Point directionpoint) {
+	public Ray(@NonNull Point startpoint, @NonNull Point directionpoint) {
 		this.startPoint = startpoint;
 		directionX = directionpoint.getX() - startpoint.getX();
 		directionY = directionpoint.getY() - startpoint.getY();
@@ -33,12 +35,11 @@ public class Ray extends GeomElement implements Cloneable, Edge {
 	/**
 	 * Create a ray that starts at <VAR>startpoint</VAR> in a given direction
 	 * 
-	 * @param Point
-	 *            startpoint
-	 * @param double directX
-	 * @param double directY
+	 * @param startpoint
+	 * @param directX
+	 * @param directY
 	 */
-	public Ray(Point startpoint, float directX, float directY) {
+	public Ray(@NonNull Point startpoint, float directX, float directY) {
 		this.startPoint = startpoint;
 		directionX = directX;
 		directionY = directY;
@@ -47,16 +48,16 @@ public class Ray extends GeomElement implements Cloneable, Edge {
 	/**
 	 * Create a ray by a startpoint and a gradient.
 	 * 
-	 * @param Point
-	 *            startpoint
-	 * @param double gradient between [0, 2pi[
+	 * @param startpoint
+	 * @param gradient between [0, 2pi[
 	 */
-	public Ray(Point startpoint, double gradient) {
+	public Ray(@NonNull Point startpoint, double gradient) {
 		this.startPoint = startpoint;
 		directionX = (float) Math.cos(gradient) * 10.0f;
 		directionY = (float) Math.sin(gradient) * 10.0f;
 	}
 
+	@NonNull
 	public Point getStartpoint() {
 		return startPoint;
 	}
@@ -70,7 +71,7 @@ public class Ray extends GeomElement implements Cloneable, Edge {
 		this.directionY = directY;
 	}
 
-	public void setDirection(Point directionPoint) {
+	public void setDirection(@NonNull Point directionPoint) {
 		this.directionX = directionPoint.getX() - this.startPoint.getX();
 		this.directionY = directionPoint.getY() - this.startPoint.getY();
 	}
@@ -83,13 +84,14 @@ public class Ray extends GeomElement implements Cloneable, Edge {
 		return directionY;
 	}
 
+	@NonNull
 	public Object clone() {
 		Ray ray = new Ray(startPoint, directionX, directionY);
 		ray.setColor(getColor());
 		return ray;
 	}
 
-	public int pointTest(Point point) {
+	public int pointTest(@NonNull Point point) {
 		float ax = startPoint.getX();
 		float ay = startPoint.getY();
 		float bx = ax + directionX;
@@ -127,7 +129,8 @@ public class Ray extends GeomElement implements Cloneable, Edge {
 		return POINT_ERROR;
 	}
 
-	public Point intersect(Edge edge) {
+	@Nullable
+	public Point intersect(@NonNull Edge edge) {
 		if (edge instanceof Segment) {
 			return ((Segment) edge).intersect(this);
 		}
@@ -205,9 +208,10 @@ public class Ray extends GeomElement implements Cloneable, Edge {
 	 * Returns a point on the ray that is <VAR>distance</VAR> away from the
 	 * startpoint.
 	 * 
-	 * @param double distance (a distance from startpoint &gt; 0)
+	 * @param distance (a distance from startpoint &gt; 0)
 	 * @return Point a point on the ray
 	 */
+	@NonNull
 	public Point pointOnRay(float distance) {
 		if (distance <= 0.0f)
 			return startPoint; // no negative distances !!
@@ -217,6 +221,7 @@ public class Ray extends GeomElement implements Cloneable, Edge {
 				startPoint.getY() + distance * directionY / dsquare);
 	}
 
+	@NonNull
 	public Segment clipTo(float xmin, float ymin, float xmax, float ymax) {
 		float x1 = startPoint.getX();
 		float y1 = startPoint.getY();
@@ -235,19 +240,20 @@ public class Ray extends GeomElement implements Cloneable, Edge {
 			else
 				y2 = ymin;
 		}
-		float koords[] = Segment.clipping(x1, y1, x2, y2, xmin, ymin, xmax,
+		float[] koords = Segment.clipping(x1, y1, x2, y2, xmin, ymin, xmax,
 				ymax);
-		if (koords == null)
-			return null;
-		return new Segment(koords[0], koords[1], koords[2], koords[3]);
+		final Segment segment = new Segment(koords[0], koords[1], koords[2], koords[3]);
+		segment.setColor(getColor());
+		return segment;
 	}
 
+	@NonNull
 	public String toString() {
 		return startPoint.toString() + "-Ray: dx=" + directionX + ",dy="
 				+ directionY;
 	}
 
-	public void paint(Canvas graphics) {
+	public void paint(@NonNull Canvas graphics) {
 		float x1 = startPoint.getX();
 		float y1 = startPoint.getY();
 		float x2 = x1, y2 = y1;

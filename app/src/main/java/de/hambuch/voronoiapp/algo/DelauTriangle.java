@@ -3,9 +3,12 @@ package de.hambuch.voronoiapp.algo;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
+import de.hambuch.voronoiapp.VoronoiApp;
 import de.hambuch.voronoiapp.geometry.Circle;
 import de.hambuch.voronoiapp.geometry.DCEL;
 import de.hambuch.voronoiapp.geometry.Point;
@@ -19,7 +22,7 @@ import de.hambuch.voronoiapp.geometry.Triangle;
  * @version 1.0
  * @author Eric Hambuch
  */
-class DelauTriangle extends Triangle {
+public class DelauTriangle extends Triangle {
 
 	private boolean halfplane;
 
@@ -40,19 +43,15 @@ class DelauTriangle extends Triangle {
 	/**
 	 * A Delaunay-Triangle. The points have to be in counterclockwise order!
 	 * 
-	 * @param Point
-	 *            a
-	 * @param Point
-	 *            b
-	 * @param Point
-	 *            c
+	 * @param a
+	 * @param b
+	 * @param c
 	 */
-	public DelauTriangle(Point a, Point b, Point c) {
+	public DelauTriangle(@NonNull Point a, @NonNull Point b, @NonNull Point c) {
 		super(a, b, c);
 		halfplane = false;
 		if (area() < 0.0) {
-			System.err
-					.println("Warning: points are not in counterclockwise order: "
+			Log.e(VoronoiApp.APPNAME, "Warning: points are not in counterclockwise order: "
 							+ a + "," + b + "," + c);
 		}
 		circumcircle = new Circle(a, b, c);
@@ -61,12 +60,10 @@ class DelauTriangle extends Triangle {
 	/**
 	 * A &quot;degenerated&quot; Delaunay-Triangle (left halfplane of a-b)
 	 * 
-	 * @param Point
-	 *            a
-	 * @param point
-	 *            b
+	 * @param a
+	 * @param b
 	 */
-	public DelauTriangle(Point a, Point b) {
+	public DelauTriangle(@NonNull Point a, @NonNull Point b) {
 		super(a, b, a);
 		halfplane = true;
 		circumcircle = new Circle(a, b, a);
@@ -75,14 +72,13 @@ class DelauTriangle extends Triangle {
 	/**
 	 * Tests, if a point lies in a triangle (or halfplane)
 	 * 
-	 * @param Point
-	 *            p
+	 * @param p
 	 * @return <VAR>INTRIANGLE</VAR> if point lies in the triangle (or
 	 *         halfplane), otherwise <VAR>OUTOFTRIANGLE</VAR> or
 	 *         <VAR>ONTRIANGLE</VAR>
-	 * @see Triangle.pointInTriangle
+	 * @see Triangle#pointInTriangle
 	 */
-	public int pointInTriangle(Point p) {
+	public int pointInTriangle(@NonNull Point p) {
 		if (!halfplane) {
 			return super.pointInTriangle(p);
 		} else {
@@ -99,12 +95,11 @@ class DelauTriangle extends Triangle {
 	 * Tests, if a point lies in the circumcircle of this triangle (or in the
 	 * full halfplane)
 	 * 
-	 * @param Point
-	 *            p
+	 * @param p
 	 * @return <VAR>true if point lies in the circumcircle (or halfplane),
 	 *         otherwise (point on border or out of) <VAR>false</VAR>
 	 */
-	public boolean pointInCircumcircle(Point p) {
+	public boolean pointInCircumcircle(@NonNull Point p) {
 		if (!halfplane) {
 			if (circumcircle.pointInCircle(p) == Circle.INCIRCLE)
 				return true;
@@ -121,6 +116,7 @@ class DelauTriangle extends Triangle {
 	 * 
 	 * @return Circle
 	 */
+	@NonNull
 	public Circle circumCircle() {
 		return circumcircle;
 	}
@@ -135,14 +131,17 @@ class DelauTriangle extends Triangle {
 		return halfplane;
 	}
 
+	@Nullable
 	public DelauTriangle getNeighbourAB() {
 		return neighbourAB;
 	}
 
+	@Nullable
 	public DelauTriangle getNeighbourBC() {
 		return neighbourBC;
 	}
 
+	@Nullable
 	public DelauTriangle getNeighbourCA() {
 		return neighbourCA;
 	}
@@ -151,10 +150,9 @@ class DelauTriangle extends Triangle {
 	 * Extend a halfplane to a &quot;real&quot; triangle by adding a third
 	 * point. This point should not be collinear!
 	 * 
-	 * @param Point
-	 *            point
+	 * @param point
 	 */
-	public void extendTriangle(Point point) {
+	public void extendTriangle(@NonNull Point point) {
 		/*
 		 * we have C+
 		 * 
@@ -170,14 +168,13 @@ class DelauTriangle extends Triangle {
 		pointC = point;
 		halfplane = false;
 		if (area() < 0.0) {
-			System.err
-					.println("Warning: extend points are not in counterclockwise order: "
+			Log.e(VoronoiApp.APPNAME,"Warning: extend points are not in counterclockwise order: "
 							+ pointA + "," + pointB + "," + pointC);
 		}
 		circumcircle = new Circle(pointA, pointB, pointC);
 	}
 
-	public void replaceNeighbour(DelauTriangle old, DelauTriangle neu) {
+	public void replaceNeighbour(@NonNull DelauTriangle old, @NonNull DelauTriangle neu) {
 		if (neighbourAB == old)
 			neighbourAB = neu;
 		else if (neighbourBC == old)
@@ -185,39 +182,39 @@ class DelauTriangle extends Triangle {
 		else if (neighbourCA == old)
 			neighbourCA = neu;
 		else
-			System.err.println("Error: " + this.toString()
+			Log.e(VoronoiApp.APPNAME,"Error: " + this.toString()
 					+ ".replaceNeighbour " + old + " with " + neu);
 	}
 
 	/**
 	 * return the neighbour in counterclockwise order that has endpoint p
 	 * 
-	 * @param Point
-	 *            p
+	 * @param p
 	 * @return DelauTriangle triangle in ccw order
 	 */
-	public DelauTriangle neighbour(Point p) {
+	@NonNull
+	public DelauTriangle neighbour(@NonNull Point p) {
 		if (pointA == p)
 			return neighbourCA; /* check A, B first (for halfplanes!!) */
 		if (pointB == p)
 			return neighbourAB;
 		if (pointC == p)
 			return neighbourBC;
-		System.err.println("Error in neighbour(" + p + ")");
+		Log.e(VoronoiApp.APPNAME,"Error in neighbour(" + p + ")");
 		return null;
 	}
 
-	public void setPointA(Point a) {
+	public void setPointA(@NonNull Point a) {
 		super.setPointA(a);
 		circumcircle = new Circle(pointA, pointB, pointC);
 	}
 
-	public void setPointB(Point b) {
+	public void setPointB(@NonNull Point b) {
 		super.setPointB(b);
 		circumcircle = new Circle(pointA, pointB, pointC);
 	}
 
-	public void setPointC(Point c) {
+	public void setPointC(@NonNull Point c) {
 		super.setPointC(c);
 		circumcircle = new Circle(pointA, pointB, pointC);
 	}
@@ -229,7 +226,7 @@ class DelauTriangle extends Triangle {
 		return super.toString();
 	}
 
-	public void paint(Canvas graphics) {
+	public void paint(@NonNull Canvas graphics) {
 		if (halfplane) {
 			Paint paint = new Paint();
 			paint.setColor(Color.RED);

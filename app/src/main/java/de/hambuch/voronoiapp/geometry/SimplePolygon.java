@@ -1,9 +1,11 @@
 package de.hambuch.voronoiapp.geometry;
 
+import android.graphics.Canvas;
+
+import androidx.annotation.NonNull;
+
 import java.util.Enumeration;
 import java.util.Vector;
-
-import android.graphics.Canvas;
 
 /**
  * A simple Polygon (no crossing edges, no holes).
@@ -26,8 +28,6 @@ public class SimplePolygon extends Polygon implements Cloneable {
    public SimplePolygon(Vector<Point> points) {
 		super(points);
    }
-
-   public int size() { return points.size(); }
 
    public Vector<Segment> toSegments() {
 		Vector<Segment> segs = new Vector<Segment>();
@@ -61,6 +61,7 @@ public class SimplePolygon extends Polygon implements Cloneable {
    }
 
 
+   @NonNull
    public Object clone() {
 		SimplePolygon polygon = new SimplePolygon(points);
 		polygon.setColor(getColor());
@@ -68,7 +69,7 @@ public class SimplePolygon extends Polygon implements Cloneable {
 		return polygon;
    }
 
-   public void paint(Canvas g) {
+   public void paint(@NonNull Canvas g) {
 		if(points.size() > 1) {
 		    if(fillColor > 0) {
 				// TODO g.setColor(fillColor);

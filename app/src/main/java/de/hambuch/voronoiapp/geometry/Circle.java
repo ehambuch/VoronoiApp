@@ -30,15 +30,15 @@ public class Circle extends GeomElement implements Cloneable {
 	/**
 	 * Creates a circle given by a center point and a radius.
 	 *
-	 * @param Point center
-	 * @param double radius
+	 * @param center
+	 * @param radius
 	 */
-	public Circle(Point center, float radius) {
+	public Circle(@NonNull Point center, float radius) {
 		this.center = center;
 		this.radius = radius;
 	}
 
-	public Circle(Point center, float radius, int color) {
+	public Circle(@NonNull Point center, float radius, int color) {
 		super(color);
 		this.center = center;
 		this.radius = radius;
@@ -48,9 +48,9 @@ public class Circle extends GeomElement implements Cloneable {
 	 * Creates a circle given by three points.
 	 * These points should not be collinear!
 	 *
-	 * @param Point a, b, c
+	 * @param a, b, c
 	 */
-	public Circle(Point a, Point b, Point c) {
+	public Circle(@NonNull Point a, @NonNull Point b, @NonNull Point c) {
 		float u = ((a.getX()-b.getX())*(a.getX()+b.getX()) + (a.getY()-b.getY())*(a.getY()+b.getY())) / 2.0f;
 		float v = ((b.getX()-c.getX())*(b.getX()+c.getX()) + (b.getY()-c.getY())*(b.getY()+c.getY())) / 2.0f;
 		float den = (a.getX()-b.getX())*(b.getY()-c.getY()) - (b.getX()-c.getX())*(a.getY()-b.getY());
@@ -70,6 +70,7 @@ public class Circle extends GeomElement implements Cloneable {
 	 *
 	 * @return Point center point
 	 */
+	@NonNull
 	public Point getCenter() {
 		return center;
 	}
@@ -77,9 +78,9 @@ public class Circle extends GeomElement implements Cloneable {
 	/**
 	 * sets the center of this circle
 	 *
-	 * @param Point center
+	 * @param center
 	 */
-	public void setCenter(Point center) {
+	public void setCenter(@NonNull Point center) {
 		this.center = center;
 	}
 
@@ -95,7 +96,7 @@ public class Circle extends GeomElement implements Cloneable {
 	/**
 	 * sets the radius
 	 *
-	 * @param double radius
+	 * @param radius
 	 */
 	public void setRadius(float radius) {
 		this.radius = radius;
@@ -106,10 +107,10 @@ public class Circle extends GeomElement implements Cloneable {
 	 * Returns <VAR>ONCIRCLE</VAR>, if the points lies on the border of this circle,
 	 * <VAR>INCIRCLE</VAR>, if the points lies really in the circle; otherwise <VAR>OUTOFCIRCLE</VAR>.
 	 *
-	 * @param Point point
+	 * @param point
 	 * @return int points lies in, on our out of circle
 	 */
-	public int pointInCircle(Point point) {
+	public int pointInCircle(@NonNull Point point) {
 		float dist = point.distance(center);
 		if(dist < radius)
 			return INCIRCLE;
@@ -129,7 +130,7 @@ public class Circle extends GeomElement implements Cloneable {
 		return center+",r="+radius;
 	}
 
-	public void paint(Canvas graphics) {
+	public void paint(@NonNull Canvas graphics) {
 		int width = (int)(radius + radius);
 		int height = (int)(radius + radius);
 		int x = (int)(center.getX() - radius);

@@ -19,9 +19,10 @@
     <string name="text_oss">Show Licences</string>
     <string name="text_shareimage">Share Image</string>
     <string name="text_clickpoint">Click to set a point…</string>
-    <string name="text_clickanotherpoint">Click to set another point…</string>
+    <string name="text_clickanotherpoint">Click to set another point or drag around…</string>
     <string name="text_rateapp">Rate on Google Play</string>
     <string name="error_showrategoogleplay">Cannot open Google Play to rate app.</string>
     <string name="text_voronoicolor">Colored</string>
     <string name="text_sharesvg">Share as SVG</string>
+    <string name="text_colored">Colored</string>
 </resources>

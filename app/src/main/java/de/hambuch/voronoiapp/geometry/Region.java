@@ -20,14 +20,15 @@ import java.util.Vector;
 public class Region extends Polygon implements Cloneable {
 
 	/* a point in the kernel of this region */
+	@NonNull
 	protected Point innerPoint;
 
-	public Region(Point kernelpoint) {
+	public Region(@NonNull Point kernelpoint) {
 		super();
 		this.innerPoint = kernelpoint;
 	}
 
-	public Region(Vector<Point> points, Point kernelpoint) {
+	public Region(@NonNull Vector<Point> points, @NonNull Point kernelpoint) {
 		super(points);
 		this.innerPoint = kernelpoint;
 	}
@@ -197,7 +198,7 @@ public class Region extends Polygon implements Cloneable {
 	 */
 	public void paint(@NonNull Canvas g) {
 		if (fillColor > 0) {
-			Polygon poly = clipTo(0.0f, 0.0f, 5000.0f, 5000.0f); // besser
+			Polygon poly = clipTo(0.0f, 0.0f, g.getWidth(), g.getHeight()); // besser
 																	// getClipBounds()
 																	// abfragen!
 			if (poly != null)

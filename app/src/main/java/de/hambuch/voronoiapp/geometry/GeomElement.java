@@ -39,10 +39,28 @@ public abstract class GeomElement {
 		return linePaint.getColor();
 	}
 
+	/**
+	 * Set a color to fill the element (if supported).
+	 * @param color the color or 0 to clear the filling
+	 */
 	public void setFillColor(@ColorInt int color) {
-		fillPaint = new Paint();
-		fillPaint.setStyle(Paint.Style.FILL);
-		fillPaint.setColor(color);
+		if(color == 0) {
+			fillPaint = null;
+		} else {
+			fillPaint = new Paint();
+			fillPaint.setStyle(Paint.Style.FILL);
+			fillPaint.setColor(color);
+		}
+	}
+
+	/**
+	 * Returns the fill color of this element. The color may be <VAR>0</VAR>,
+	 * which means, that this element won't be filled.
+	 *
+	 * @return the color or 0
+	 */
+	public int getFillColor() {
+		return fillPaint != null ? fillPaint.getColor() : 0;
 	}
 
 	@NonNull

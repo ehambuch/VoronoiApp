@@ -1,6 +1,7 @@
 package de.hambuch.voronoiapp.geometry;
 
 import android.graphics.Canvas;
+import android.graphics.Path;
 
 import androidx.annotation.NonNull;
 
@@ -25,11 +26,12 @@ public class SimplePolygon extends Polygon implements Cloneable {
 		super();
    }
 
-   public SimplePolygon(Vector<Point> points) {
+   public SimplePolygon(@NonNull Vector<Point> points) {
 		super(points);
    }
 
-   public Vector<Segment> toSegments() {
+	@NonNull
+	public Vector<Segment> toSegments() {
 		Vector<Segment> segs = new Vector<Segment>();
 		int i;
 		Enumeration<Point> enume = points.elements();
@@ -71,28 +73,20 @@ public class SimplePolygon extends Polygon implements Cloneable {
 
    public void paint(@NonNull Canvas g) {
 		if(points.size() > 1) {
-		    if(fillColor > 0) {
-				// TODO g.setColor(fillColor);
-				int nPoints = points.size();
-				int[] xPoints = new int[nPoints];
-				int[] yPoints = new int[nPoints];
-				Enumeration<Point> enume = points.elements();
-				Point p;
-				int i=0;
-				while(enume.hasMoreElements()) {
-				    p = (Point)enume.nextElement();
-				    xPoints[i] = (int)p.getX();
-				    yPoints[i] = (int)p.getY();
-				    i++;
-				}
-				// TODO
-				//g.fillPolygon(xPoints, yPoints, nPoints);
+		    if(getFillPaint() != null) {
+				final Path path = new Path();
+				path.setFillType(Path.FillType.EVEN_ODD);
+				path.moveTo(points.get(0).getX(), points.get(0).getY());
+				for(int i=1;i<points.size();i++)
+					path.lineTo(points.get(i).getX(), points.get(i).getY());
+				path.close();
+				g.drawPath(path, getFillPaint());
 		    }
-		    paintOutline(g);
+			paintOutline(g); // paint outline seperately
 		}
    }
 
-   protected void paintOutline(Canvas g) {
+   protected void paintOutline(@NonNull Canvas g) {
 		if(points.size() > 1) {
 		    Enumeration<Point> enume = points.elements();
 		    Point firstp = (Point)enume.nextElement();

@@ -73,6 +73,7 @@ import de.hambuch.voronoiapp.geometry.Point;
  * <li>1.11.0 (15): Share Image function, OSS licenses</li>
  * <li>1.12.0 (16): Android 13</li>
  * <li>1.13.0 (17/18): Android 14, Material 3 Design, Removed some functions, Export SVG</li>
+ * <li>1.14.0 (19): Support for filled diagrams</li>
  * </ol>
  * @author Eric Hambuch (erichambuch@googlemail.com)
  */
@@ -141,7 +142,9 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 			if(checkedIds.contains(R.id.filter_voronoi))
 				drawableElementSet.add(VoronoiView.DrawableElement.VORONOI);
 			if(checkedIds.contains(R.id.filter_voronoicolor))
-				drawableElementSet.add(VoronoiView.DrawableElement.VORONOICOLORED); // TODO: not implemented yet
+				drawableElementSet.add(VoronoiView.DrawableElement.VORONOICOLORED);
+			if(checkedIds.contains(R.id.filter_delaunaycolor))
+				drawableElementSet.add(VoronoiView.DrawableElement.DELAUNAYCOLORED);
 			if(checkedIds.contains(R.id.filter_delaunay))
 				drawableElementSet.add(VoronoiView.DrawableElement.DELAUNAY);
 			if(checkedIds.contains(R.id.filter_convex))

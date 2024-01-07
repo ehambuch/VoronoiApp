@@ -35,8 +35,6 @@ public class VoronoiDiagram extends GeomElement {
 	@NonNull
 	protected final DelaunayTriangulation delaunay;
 
-	private boolean fillColors = false;
-
 	public VoronoiDiagram() {
 		super(Color.BLUE);
 		delaunay = new DelaunayTriangulation();
@@ -45,10 +43,6 @@ public class VoronoiDiagram extends GeomElement {
 	public VoronoiDiagram(@NonNull DelaunayTriangulation delaunay) {
 		super(Color.BLUE);
 		this.delaunay = delaunay;
-	}
-
-	public void setFill(boolean fill) {
-		this.fillColors = fill;
 	}
 
 	/**
@@ -112,7 +106,7 @@ public class VoronoiDiagram extends GeomElement {
 	 * @see Region
 	 */
 
-	@NonNull
+	@Nullable
 	public Region toRegion(@NonNull Point p) {
 		Region region = new Region(p);
 		if (delaunay.size() == 0) {
@@ -546,10 +540,6 @@ public class VoronoiDiagram extends GeomElement {
 							ray.setColor(getColor());
 							ray.paint(g);
 						}
-					}
-					/* Fill cell */
-					if(this.fillColors) {
-						// TODO: use Path to fill an area
 					}
 					/* Rekursion */
 					if (!t1.visited) paintit(g, t1);

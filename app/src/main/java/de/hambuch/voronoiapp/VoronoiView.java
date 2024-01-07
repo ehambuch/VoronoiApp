@@ -16,10 +16,12 @@ import java.util.Iterator;
 import java.util.Set;
 
 import de.hambuch.voronoiapp.algo.ConvexHull;
+import de.hambuch.voronoiapp.algo.DelauTriangle;
 import de.hambuch.voronoiapp.algo.DelaunayTriangulation;
 import de.hambuch.voronoiapp.algo.VoronoiDiagram;
 import de.hambuch.voronoiapp.algo.VoronoiDiagramCircle;
 import de.hambuch.voronoiapp.geometry.Point;
+import de.hambuch.voronoiapp.geometry.Polygon;
 
 /**
  * View that display the diagram.
@@ -27,8 +29,20 @@ import de.hambuch.voronoiapp.geometry.Point;
 public class VoronoiView extends View {
 
 	public enum DrawableElement {
-		VORONOI, VORONOICOLORED, DELAUNAY, CONVEXHULL, MAXCIRCLE
+		VORONOI, VORONOICOLORED, DELAUNAY, DELAUNAYCOLORED, CONVEXHULL, MAXCIRCLE
 	}
+
+	/**
+	 * Define 6 colors of a color wheel, we do not support an algorithm for the 4-color-theorem.
+	 */
+	static final int[] COLORS = new int[]{
+			Color.rgb(255, 255, 1), // yellow
+			Color.rgb(0, 153, 0), // green
+			Color.rgb(0, 101, 205), // blue
+			Color.rgb(151,0,153), // violet
+			Color.rgb(254,0,0), // red
+			Color.rgb(252, 153,0) // orange
+	};
 
 	private DelaunayTriangulation triang;
 	private VoronoiDiagram drawableVoronoi;
@@ -83,16 +97,17 @@ public class VoronoiView extends View {
 			canvas.drawColor(Color.WHITE);
 
 		// draw the elements, if enabled, can be draw over each other
-		if(elementsToDraw.contains(DrawableElement.VORONOICOLORED) && drawableVoronoi != null) {
-			drawableVoronoi.setFill(true); // TODO: not implemented yet
-			drawableVoronoi.paint(canvas);
-		} else if (elementsToDraw.contains(DrawableElement.VORONOI) && drawableVoronoi != null) {
-			drawableVoronoi.setFill(false);
-			drawableVoronoi.paint(canvas);
-		}
-		if (elementsToDraw.contains(DrawableElement.DELAUNAY) && drawableDelaunay != null) {
+		if(elementsToDraw.contains(DrawableElement.DELAUNAYCOLORED) && drawableDelaunay != null) {
+			paintFilled(canvas, drawableDelaunay);
+		} else if (elementsToDraw.contains(DrawableElement.DELAUNAY) && drawableDelaunay != null) {
 			drawableDelaunay.paint(canvas);
 		}
+		if(elementsToDraw.contains(DrawableElement.VORONOICOLORED) && drawableVoronoi != null) {
+			paintFilled(canvas, drawableVoronoi);
+		} else if (elementsToDraw.contains(DrawableElement.VORONOI) && drawableVoronoi != null) {
+			drawableVoronoi.paint(canvas);
+		}
+		// hull and circle only as lines
 		if (elementsToDraw.contains(DrawableElement.CONVEXHULL) && drawableConvex != null) {
 			drawableConvex.paint(canvas);
 		}
@@ -104,6 +119,61 @@ public class VoronoiView extends View {
 		for (Iterator<Point> p = triang.points(); p.hasNext(); ) {
 			p.next().paint(canvas);
 		}
+	}
+
+	/**
+	 * USe a special algorithm to paint a filled, colored voronoi diagram.
+	 * <p>We do not implement this as the standard #paint() method in the element itself. The algorithm provided here is "primitive" and inefficient, as
+	 * it convers to voronoi diagram into voronoi regions (Region) and the to closed Polygons that can be painted directly.
+	 * Nevertheless for an reasonable number of points that should work.</p>
+	 * @param voronoiDiagram the voronoi diagram to paint
+	 */
+	private void paintFilled(Canvas canvas, VoronoiDiagram voronoiDiagram) {
+		// TODO: can we avoid the same color for adjacent cells if we process according to the delaunay triangles in the correct neighbouring order?
+		int color = 0;
+		for(Iterator<Point> iterator = voronoiDiagram.points(); iterator.hasNext(); ) {
+			Polygon polygon = voronoiDiagram.toRegion(iterator.next()).clipTo(0,0,canvas.getWidth(), canvas.getHeight());
+			if(polygon != null) {
+				polygon.setFillColor(COLORS[(color++) % COLORS.length]);
+				polygon.paint(canvas);
+			}
+		}
+	}
+
+	/**
+	 * USe a special algorithm to paint a filled, colored delaunay triangulation.
+	 * <p>We do not implement this as the standard #paint() method in the element itself, but simply visit all triangles and paint them.</p>
+	 * @param triangulation the triangulation to paint
+	 */
+	private void paintFilled(Canvas canvas, DelaunayTriangulation triangulation) {
+		// first reset all colors
+		triangulation.visitTriangles(triangle -> triangle.setFillColor(0));
+		triangulation.visitTriangles(new DelaunayTriangulation.Visitor() {
+			int colorCounter = 0;
+			@Override
+			public void visit(@NonNull DelauTriangle triangle) {
+				if(triangle.getFillColor() == 0) {
+					setColorAccordingNeighbours(triangle);
+					triangle.paint(canvas);
+				} // else: already painted
+			}
+			private void setColorAccordingNeighbours(DelauTriangle t) {
+				int color = COLORS[(colorCounter++) % COLORS.length];
+				if(t.getNeighbourAB() != null && color == t.getNeighbourAB().getFillColor()) {
+					color = COLORS[(colorCounter++) % COLORS.length];
+				} else
+				if(t.getNeighbourBC() != null && color == t.getNeighbourBC().getFillColor()) {
+					color = COLORS[(colorCounter++) % COLORS.length];
+				} else
+				if(t.getNeighbourCA() != null && color == t.getNeighbourCA().getFillColor()) {
+					color = COLORS[(colorCounter++) % COLORS.length];
+				}
+				t.setFillColor(color);
+			}
+		});
+
+		// and reset again, if drawn without filling next time
+		triangulation.visitTriangles(triangle -> triangle.setFillColor(0));
 	}
 
 	@Nullable

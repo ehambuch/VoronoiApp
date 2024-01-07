@@ -39,26 +39,6 @@ public abstract class Polygon extends GeomElement {
 	public abstract boolean pointInPolygon(@NonNull Point p);
 
 	/**
-	 * Set the fill color for this polygon. If <VAR>fillcolro</VAR> is
-	 * <VAR>null</VAR>, then the polygon won't be filled.
-	 * 
-	 * @param fillcolor
-	 */
-	public void setFillColor(int fillcolor) {
-		this.fillColor = fillcolor;
-	}
-
-	/**
-	 * Returns the fill color of this polygon. The color may be <VAR>null</VAR>,
-	 * which means, that this polygon won't be filled.
-	 * 
-	 * @return Color
-	 */
-	public int getFillColor() {
-		return fillColor;
-	}
-
-	/**
 	 * add a point to the polygon.
 	 * 
 	 * @param point
@@ -126,7 +106,7 @@ public abstract class Polygon extends GeomElement {
 		if (points2.size() > 1) {
 			SimplePolygon poly = new SimplePolygon(points2);
 			poly.setColor(getColor());
-			poly.setFillColor(fillColor);
+			poly.setFillColor(getFillColor());
 			return poly;
 		}
 		return null;
@@ -136,12 +116,13 @@ public abstract class Polygon extends GeomElement {
 	 * Clipping routines for every edge. See: W.D. Fellner: Computergrafik,
 	 * B.I.Wissenschaftsverlag, 1992
 	 */
-	protected Vector<Point> cutBottom(Vector<Point> points, float ymax) {
+	@NonNull
+	protected Vector<Point> cutBottom(@NonNull Vector<Point> points, float ymax) {
 		Vector<Point> newpoints = new Vector<Point>();
 		int i = 0;
 		while (i < points.size()) {
-			Point p = (Point) points.elementAt(i % points.size());
-			Point q = (Point) points.elementAt((i + 1) % points.size());
+			Point p = (Point) points.get(i % points.size());
+			Point q = (Point) points.get((i + 1) % points.size());
 			/* normal point */
 			if (p.getY() <= ymax) {
 				/* is visible */
@@ -159,12 +140,13 @@ public abstract class Polygon extends GeomElement {
 		return newpoints;
 	}
 
-	protected Vector<Point> cutTop(Vector<Point> points, float ymin) {
+	@NonNull
+	protected Vector<Point> cutTop(@NonNull Vector<Point> points, float ymin) {
 		Vector<Point> newpoints = new Vector<Point>();
 		int i = 0;
 		while (i < points.size()) {
-			Point p = (Point) points.elementAt(i % points.size());
-			Point q = (Point) points.elementAt((i + 1) % points.size());
+			Point p = (Point) points.get(i % points.size());
+			Point q = (Point) points.get((i + 1) % points.size());
 			/* normal point */
 			if (p.getY() >= ymin) {
 				/* is visible */

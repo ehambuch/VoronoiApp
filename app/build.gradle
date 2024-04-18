@@ -6,11 +6,11 @@ plugins {
 android {
     defaultConfig {
         applicationId 'de.hambuch.voronoiapp'
-        minSdkVersion 26
+        minSdkVersion 28
         targetSdkVersion 34
         compileSdk 34
-        versionCode 19
-        versionName '1.14.0'
+        versionCode 20
+        versionName '1.15.0'
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -41,7 +41,7 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     implementation "androidx.core:core:1.12.0"
-    implementation "androidx.compose.material3:material3:1.1.2"
+    implementation "androidx.compose.material3:material3:1.2.1"
     implementation 'com.google.android.material:material:1.11.0'
     implementation("com.google.android.gms:play-services-oss-licenses:17.0.1")
     // fix build errors

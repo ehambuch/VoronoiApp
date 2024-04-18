@@ -45,6 +45,11 @@ public class VoronoiDiagram extends GeomElement {
 		this.delaunay = delaunay;
 	}
 
+	@NonNull
+	public DelaunayTriangulation getDelaunay() {
+		return this.delaunay;
+	}
+
 	/**
 	 * insert a new site to this voronoi diagram. Make sure, that the diagrams
 	 * doensn't alreays contain the new site.

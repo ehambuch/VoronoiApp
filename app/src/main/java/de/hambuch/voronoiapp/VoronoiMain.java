@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.ImageDecoder;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Build;
@@ -24,8 +25,8 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -74,48 +75,11 @@ import de.hambuch.voronoiapp.geometry.Point;
  * <li>1.12.0 (16): Android 13</li>
  * <li>1.13.0 (17/18): Android 14, Material 3 Design, Removed some functions, Export SVG</li>
  * <li>1.14.0 (19): Support for filled diagrams</li>
+ * <li>1.15.0 (20): Select media image with new Android Image Picker, Min SDK = 28</li>
  * </ol>
  * @author Eric Hambuch (erichambuch@googlemail.com)
  */
 public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
-
-	/**
-	 * Background task to load image.
-	 */
-    private static class LoadImage implements Runnable {
-    	private final Context context;
-    	private final Uri uri;
-    	private final int widht;
-    	private final int height;
-    	private final LoadImageCallback callback;
-
-		LoadImage(Context context, Uri uri, int w, int h, LoadImageCallback callback) {
-			this.context = context;
-			this.uri = uri;
-			this.widht = w;
-			this.height = h;
-			this.callback = callback;
-		}
-
-		@Override
-		public void run() {
-			try {
-				Bitmap bitmap = decodeUri(context, uri, widht, height);
-				if ( bitmap != null )
-					callback.imageLoaded(bitmap);
-			}
-			catch(Exception e) {
-				Log.e("VoronoiMain", "Error loading picture", e);
-				callback.errorLoading(e);
-			}
-		}
-	}
-
-	interface LoadImageCallback {
-		void imageLoaded(Bitmap bitmap);
-		void errorLoading(Exception e);
-	}
-
 
 	private final DelaunayTriangulation triangulation = new DelaunayTriangulation();
 	private VoronoiView voronoiView;
@@ -123,7 +87,7 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 	private boolean deleteMode = false;
 	private Menu menu;
 
-	private ActivityResultLauncher<Intent> loadImageLauncher;
+	private ActivityResultLauncher<PickVisualMediaRequest> loadImageLauncher;
 	private final ExecutorService executors = Executors.newFixedThreadPool(1);
 
 	/** Called when the activity is first created. */
@@ -156,14 +120,39 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 			voronoiView.setDrawables(drawableElementSet);
 			voronoiView.invalidate();
 		});
-		loadImageLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), this::loadBackgroundImage);
-		voronoiView.post(new Runnable() {
-			@Override
-			public void run() {
-				voronoiView.setBackgroundBitmap((Bitmap)null);
-				voronoiView.setDrawables(Collections.singleton(VoronoiView.DrawableElement.VORONOI));
-			}
-		});
+
+		loadImageLauncher =
+				registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+					if (uri != null) {
+						try {
+							final ImageDecoder.Source source = ImageDecoder.createSource(getContentResolver(), uri);
+							// Execute a longer laoding into another thread
+							((VoronoiApp)this.getApplication()).executeBackground(new Runnable() {
+								@Override
+								public void run() {
+									try {
+										final Bitmap bitmap = ImageDecoder.decodeBitmap(source, (decoder, info, source1) -> {
+                                            decoder.setTargetSize(voronoiView.getWidth(), voronoiView.getHeight()); // scale to size
+                                        });
+										runOnUiThread(() -> {
+                                            voronoiView.setBackgroundBitmap(bitmap);
+                                            voronoiView.postInvalidate(); // from non-UI thread!
+                                        });
+									} catch(Exception e) {
+										Toast.makeText(VoronoiMain.this, getString(R.string.error_loadimage) + ": " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+									}
+								}
+							});
+						} catch (Exception e) {
+							Toast.makeText(VoronoiMain.this, getString(R.string.error_loadimage) + ": " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+						}
+					}
+				});
+
+		voronoiView.post(() -> {
+            voronoiView.setBackgroundBitmap((Bitmap)null);
+            voronoiView.setDrawables(Collections.singleton(VoronoiView.DrawableElement.VORONOI));
+        });
 	}
 
 	@Override
@@ -192,8 +181,8 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 			newDiagram();
 			return true;
 		} else if(itemId ==  R.id.item_load) {
-				loadBackground();
-				return true;
+			loadBackground();
+			return true;
 		} else if(itemId ==  R.id.item_share) {
 			shareImage();
 			return true;
@@ -385,12 +374,8 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 	 * Load background from gallery.
 	 */
 	private void loadBackground() {
-		Intent intent = new Intent();
-        intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-		intent.addCategory(Intent.CATEGORY_OPENABLE);
-		loadImageLauncher.launch(Intent.createChooser(intent, getText(
-        		R.string.title_selectbackground))); // callback see onCreate()
+		loadImageLauncher.launch(new PickVisualMediaRequest.Builder()
+				.setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE).build());
 	}
 
 	private void shareImage() {
@@ -441,25 +426,6 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 					// ignore
 				}
 		}
-	}
-
-	protected void loadBackgroundImage(@NonNull ActivityResult selectedImageUri) {
-		if(selectedImageUri == null || selectedImageUri.getData() == null)
-			return;
-		// Load image in background thread!
-		executors.submit(new LoadImage(getApplicationContext(), selectedImageUri.getData().getData(), voronoiView.getWidth(), voronoiView.getHeight(),
-				new LoadImageCallback() {
-					@Override
-					public void imageLoaded(Bitmap bitmap) {
-						voronoiView.setBackgroundBitmap(bitmap);
-						voronoiView.postInvalidate(); // from non-UI thread!
-					}
-
-					@Override
-					public void errorLoading(Exception e) {
-						findViewById(R.id.voronoiview).post(() -> Toast.makeText(VoronoiMain.this, getString(R.string.error_loadimage) + ": " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show());
-					}
-				}));
 	}
 	
 	@Override

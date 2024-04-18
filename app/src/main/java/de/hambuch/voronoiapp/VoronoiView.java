@@ -44,6 +44,40 @@ public class VoronoiView extends View {
 			Color.rgb(252, 153,0) // orange
 	};
 
+	/**
+	 * Visitor to color all delaunay triangles without color conflicts of adjacents.
+	 */
+	private static class PaintFilledDelaunay implements DelaunayTriangulation.Visitor {
+		private int colorCounter = 0;
+
+		private final Canvas canvas;
+
+		protected PaintFilledDelaunay(Canvas convas) {
+			this.canvas = convas;
+		}
+
+		@Override
+		public void visit(@NonNull DelauTriangle triangle) {
+			if (triangle.getFillColor() == 0) {
+				setColorAccordingNeighbours(triangle);
+				if (canvas != null)
+					triangle.paint(canvas);
+			} // else: already painted
+		}
+
+		protected void setColorAccordingNeighbours(DelauTriangle t) {
+			int color = COLORS[(colorCounter++) % COLORS.length];
+			if (t.getNeighbourAB() != null && color == t.getNeighbourAB().getFillColor()) {
+				color = COLORS[(colorCounter++) % COLORS.length];
+			} else if (t.getNeighbourBC() != null && color == t.getNeighbourBC().getFillColor()) {
+				color = COLORS[(colorCounter++) % COLORS.length];
+			} else if (t.getNeighbourCA() != null && color == t.getNeighbourCA().getFillColor()) {
+				color = COLORS[(colorCounter++) % COLORS.length];
+			}
+			t.setFillColor(color);
+		}
+	}
+
 	private DelaunayTriangulation triang;
 	private VoronoiDiagram drawableVoronoi;
 	private DelaunayTriangulation drawableDelaunay;
@@ -130,6 +164,7 @@ public class VoronoiView extends View {
 	 */
 	private void paintFilled(Canvas canvas, VoronoiDiagram voronoiDiagram) {
 		// TODO: can we avoid the same color for adjacent cells if we process according to the delaunay triangles in the correct neighbouring order?
+		// Idea: a point of the corresponding triangulation may have multiple triangles - all of them must have different colors
 		int color = 0;
 		for(Iterator<Point> iterator = voronoiDiagram.points(); iterator.hasNext(); ) {
 			Polygon polygon = voronoiDiagram.toRegion(iterator.next()).clipTo(0,0,canvas.getWidth(), canvas.getHeight());
@@ -145,33 +180,10 @@ public class VoronoiView extends View {
 	 * <p>We do not implement this as the standard #paint() method in the element itself, but simply visit all triangles and paint them.</p>
 	 * @param triangulation the triangulation to paint
 	 */
-	private void paintFilled(Canvas canvas, DelaunayTriangulation triangulation) {
+	private void paintFilled(final Canvas canvas, final DelaunayTriangulation triangulation) {
 		// first reset all colors
 		triangulation.visitTriangles(triangle -> triangle.setFillColor(0));
-		triangulation.visitTriangles(new DelaunayTriangulation.Visitor() {
-			int colorCounter = 0;
-			@Override
-			public void visit(@NonNull DelauTriangle triangle) {
-				if(triangle.getFillColor() == 0) {
-					setColorAccordingNeighbours(triangle);
-					triangle.paint(canvas);
-				} // else: already painted
-			}
-			private void setColorAccordingNeighbours(DelauTriangle t) {
-				int color = COLORS[(colorCounter++) % COLORS.length];
-				if(t.getNeighbourAB() != null && color == t.getNeighbourAB().getFillColor()) {
-					color = COLORS[(colorCounter++) % COLORS.length];
-				} else
-				if(t.getNeighbourBC() != null && color == t.getNeighbourBC().getFillColor()) {
-					color = COLORS[(colorCounter++) % COLORS.length];
-				} else
-				if(t.getNeighbourCA() != null && color == t.getNeighbourCA().getFillColor()) {
-					color = COLORS[(colorCounter++) % COLORS.length];
-				}
-				t.setFillColor(color);
-			}
-		});
-
+		triangulation.visitTriangles(new PaintFilledDelaunay(canvas));
 		// and reset again, if drawn without filling next time
 		triangulation.visitTriangles(triangle -> triangle.setFillColor(0));
 	}

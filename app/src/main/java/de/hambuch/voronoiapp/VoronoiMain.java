@@ -132,6 +132,7 @@ public class VoronoiMain extends AppCompatActivity implements OnTouchListener {
 								public void run() {
 									try {
 										final Bitmap bitmap = ImageDecoder.decodeBitmap(source, (decoder, info, source1) -> {
+											decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE); // necessary to save image later
                                             decoder.setTargetSize(voronoiView.getWidth(), voronoiView.getHeight()); // scale to size
                                         });
 										runOnUiThread(() -> {
